@@ -1,0 +1,33 @@
+.wrap {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(72px + var(--safe-bottom));
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  pointer-events: none;
+  padding: 0 var(--space-4);
+}
+
+.toast {
+  max-width: 480px;
+  width: fit-content;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-input);
+  font-size: var(--text-label);
+  color: #fff;
+  box-shadow: var(--shadow-modal);
+}
+
+.neutral {
+  background: var(--color-accent);
+}
+.error {
+  background: var(--color-expense);
+}
+.success {
+  background: var(--color-income);
+}
