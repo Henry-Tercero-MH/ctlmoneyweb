@@ -88,8 +88,8 @@ export default function HomeScreen() {
       {/* ── Gráfica de gasto diario ── */}
       {!loadingSummary && dailyData.length > 0 && (
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>{t.home.dailySpend}</h2>
           <Card className={styles.chartCard}>
+            <h2 className={styles.chartTitle}>{t.home.dailySpend}</h2>
             <ResponsiveContainer width="100%" height={100}>
               <BarChart data={dailyData} barSize={6} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
                 <XAxis

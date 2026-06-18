@@ -452,17 +452,22 @@
 
 /* ── Emoji icon picker ── */
 .iconGrid {
-  display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  gap: var(--space-1);
-  max-height: 200px;
-  overflow-y: auto;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: var(--space-2);
+  overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  padding-bottom: var(--space-1);
+  scrollbar-width: none;
+}
+
+.iconGrid::-webkit-scrollbar {
+  display: none;
 }
 
 .iconBtn {
-  width: 100%;
-  aspect-ratio: 1;
+  width: 44px;
+  height: 44px;
   border-radius: var(--radius-input);
   border: 1.5px solid transparent;
   background: var(--color-surface-2);
@@ -472,6 +477,7 @@
   cursor: pointer;
   color: var(--color-text-secondary);
   transition: all var(--transition-fast);
+  flex-shrink: 0;
 }
 
 .iconBtn.iconActive {
