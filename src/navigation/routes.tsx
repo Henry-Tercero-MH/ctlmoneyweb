@@ -15,6 +15,7 @@ const BudgetsScreen = lazy(() => import('@/ui/screens/budgets/BudgetsScreen'));
 const RecurringScreen = lazy(() => import('@/ui/screens/recurring/RecurringScreen'));
 const InstallmentsScreen = lazy(() => import('@/ui/screens/installments/InstallmentsScreen'));
 const CalculatorsScreen = lazy(() => import('@/ui/screens/calculators/CalculatorsScreen'));
+const CardsScreen = lazy(() => import('@/ui/screens/cards/CardsScreen'));
 
 function PageFallback() {
   return (
@@ -73,6 +74,7 @@ export function AppRoutes() {
           <Route path="presupuestos" element={<BudgetsScreen />} />
           <Route path="recurrentes" element={<RecurringScreen />} />
           <Route path="cuotas" element={<InstallmentsScreen />} />
+          <Route path="tarjetas" element={<CardsScreen />} />
           <Route path="calculadoras" element={<CalculatorsScreen />} />
           <Route path="mas" element={<MoreScreen />} />
         </Route>

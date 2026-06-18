@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuid } from 'uuid';
-import { Sun, Moon, ChevronRight, Plus, Trash2, Pencil, PiggyBank, RefreshCw, Target, Download, FileJson, FileText, MonitorDown, CreditCard, Calculator } from 'lucide-react';
+import { Sun, Moon, ChevronRight, Plus, Trash2, Pencil, PiggyBank, RefreshCw, Target, Download, FileJson, FileText, MonitorDown, CreditCard, Calculator, CalendarClock } from 'lucide-react';
 import { usePwaInstall } from '@/hooks/usePwaInstall';
 import { usePwaUpdate } from '@/hooks/usePwaUpdate';
 import { exportApi } from '@/api/endpoints/export';
@@ -300,11 +300,19 @@ export default function MoreScreen() {
               </div>
               <ChevronRight size={16} strokeWidth={1.75} className={styles.rowChevron} />
             </div>
-            <div className={styles.listRow}
+            <div className={`${styles.listRow} ${styles.rowBorder}`}
               onClick={() => navigate('/calculadoras')} role="button" tabIndex={0}>
               <div className={styles.catRow}>
                 <span className={styles.catIcon}><Calculator size={18} strokeWidth={1.75} /></span>
                 <p className={styles.listRowName}>Calculadoras financieras</p>
+              </div>
+              <ChevronRight size={16} strokeWidth={1.75} className={styles.rowChevron} />
+            </div>
+            <div className={styles.listRow}
+              onClick={() => navigate('/tarjetas')} role="button" tabIndex={0}>
+              <div className={styles.catRow}>
+                <span className={styles.catIcon}><CalendarClock size={18} strokeWidth={1.75} /></span>
+                <p className={styles.listRowName}>Tarjetas de crédito</p>
               </div>
               <ChevronRight size={16} strokeWidth={1.75} className={styles.rowChevron} />
             </div>
