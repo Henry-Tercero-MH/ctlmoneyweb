@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuid } from 'uuid';
-import { Sun, Moon, ChevronRight, Plus, Trash2, Pencil, PiggyBank, RefreshCw, Target } from 'lucide-react';
+import { Sun, Moon, ChevronRight, Plus, Trash2, Pencil, PiggyBank, RefreshCw, Target, Download, FileJson, FileText } from 'lucide-react';
+import { exportApi } from '@/api/endpoints/export';
 import { useAuthStore } from '@/stores/authStore';
 import { useUiStore } from '@/stores/uiStore';
 import { useAccounts, useCreateAccount, useUpdateAccount, useArchiveAccount } from '@/hooks/useAccounts';
@@ -122,6 +123,40 @@ export default function MoreScreen() {
   function handleThemeChange(th: 'light' | 'dark') {
     setTheme(th);
     setSetting.mutate({ key: 'theme', value: th });
+  }
+
+  // ── Export ──
+  const [exporting, setExporting] = useState<'json' | 'csv' | null>(null);
+
+  async function handleExportJson() {
+    setExporting('json');
+    try {
+      const result = await exportApi.json();
+      const blob = new Blob([JSON.stringify(result, null, 2)], { type: 'application/json' });
+      triggerDownload(blob, `ctlmoney_${result.exported_at.slice(0, 10)}.json`);
+    } finally { setExporting(null); }
+  }
+
+  async function handleExportCsv() {
+    setExporting('csv');
+    try {
+      const result = await exportApi.csv();
+      // ZIP simulado: un CSV por hoja, concatenados con separador legible
+      const content = Object.entries(result.sheets)
+        .map(([name, csv]) => `### ${name}\n${csv}`)
+        .join('\n\n');
+      const blob = new Blob([content], { type: 'text/csv;charset=utf-8' });
+      triggerDownload(blob, `ctlmoney_${result.exported_at.slice(0, 10)}.csv`);
+    } finally { setExporting(null); }
+  }
+
+  function triggerDownload(blob: Blob, filename: string) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   function handleSignOut() {
@@ -270,6 +305,39 @@ export default function MoreScreen() {
                 </div>
               ))
             )}
+          </Card>
+        </div>
+
+        {/* ── Exportar datos ── */}
+        <div className={styles.listBlock}>
+          <p className={styles.listTitle}>{t.more.backup}</p>
+          <Card className={styles.listCard}>
+            <div className={`${styles.listRow} ${styles.rowBorder}`}
+              onClick={handleExportJson} role="button" tabIndex={0}>
+              <div className={styles.catRow}>
+                <span className={styles.catIcon}><FileJson size={18} strokeWidth={1.75} /></span>
+                <div>
+                  <p className={styles.listRowName}>{t.more.exportJson}</p>
+                  <p className={styles.listRowSub}>Todas las hojas en un archivo</p>
+                </div>
+              </div>
+              {exporting === 'json'
+                ? <span className={styles.exportSpinner}>…</span>
+                : <Download size={16} strokeWidth={1.75} className={styles.rowChevron} />}
+            </div>
+            <div className={styles.listRow}
+              onClick={handleExportCsv} role="button" tabIndex={0}>
+              <div className={styles.catRow}>
+                <span className={styles.catIcon}><FileText size={18} strokeWidth={1.75} /></span>
+                <div>
+                  <p className={styles.listRowName}>{t.more.exportCsv}</p>
+                  <p className={styles.listRowSub}>Compatible con Excel y Google Sheets</p>
+                </div>
+              </div>
+              {exporting === 'csv'
+                ? <span className={styles.exportSpinner}>…</span>
+                : <Download size={16} strokeWidth={1.75} className={styles.rowChevron} />}
+            </div>
           </Card>
         </div>
 

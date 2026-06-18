@@ -567,7 +567,8 @@ function validateTransaction_(p) {
 
 function listAccounts_() {
   return readAll_('accounts').filter(function (a) {
-    return a.archived !== true && a.archived !== 'TRUE';
+    // serializeCell_ ya convierte "TRUE"/"FALSE" a boolean — solo comparar con true
+    return a.archived !== true;
   });
 }
 
@@ -575,13 +576,20 @@ function getAccountBalances_() {
   var accounts = readAll_('accounts');
   var txns = readAll_('transactions');
   var map = {};
+  // Inicializar con saldo inicial (todas las cuentas, incluso archivadas)
   accounts.forEach(function (a) { map[a.id] = Number(a.initial_balance_minor) || 0; });
   txns.forEach(function (t) {
     var amt = Number(t.amount_minor) || 0;
-    if (map[t.account_id] === undefined) return;
-    if (t.kind === 'income') map[t.account_id] += amt;
-    else if (t.kind === 'expense') map[t.account_id] -= amt;
-    else if (t.kind === 'transfer') map[t.account_id] -= amt;
+    // Cuenta origen
+    if (map[t.account_id] !== undefined) {
+      if (t.kind === 'income')   map[t.account_id] += amt;
+      else if (t.kind === 'expense')  map[t.account_id] -= amt;
+      else if (t.kind === 'transfer') map[t.account_id] -= amt;
+    }
+    // Cuenta destino en transferencia recibe el monto
+    if (t.kind === 'transfer' && t.transfer_account_id && map[t.transfer_account_id] !== undefined) {
+      map[t.transfer_account_id] += amt;
+    }
   });
   return Object.keys(map).map(function (id) {
     return { account_id: id, balance_minor: map[id] };
@@ -726,9 +734,8 @@ function setSetting_(payload, user) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function listBudgets_() {
-  return readAll_('budgets').filter(function (b) {
-    return b.active !== false && b.active !== 'FALSE';
-  });
+  // serializeCell_ ya normaliza active a boolean — solo comparar con false
+  return readAll_('budgets').filter(function (b) { return b.active !== false; });
 }
 
 function createBudget_(payload, user) {
@@ -882,6 +889,41 @@ function deleteGoal_(payload, user) {
   var res = deleteRow_('goals', payload.id);
   audit_('deleteGoal', 'goals', payload.id, payload, user.email);
   return res;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EXPORT — Volcado completo de datos
+// ─────────────────────────────────────────────────────────────────────────────
+
+function exportData_(payload) {
+  var format = payload && payload.format === 'csv' ? 'csv' : 'json';
+  var sheets = ['accounts', 'categories', 'transactions', 'budgets', 'recurring_rules', 'goals'];
+
+  if (format === 'json') {
+    var out = { exported_at: nowIso_(), version: 1, data: {} };
+    sheets.forEach(function (s) { out.data[s] = readAll_(s); });
+    return out;
+  }
+
+  // CSV: devuelve un objeto { sheets: { name: csvString } }
+  var csvOut = { exported_at: nowIso_(), sheets: {} };
+  sheets.forEach(function (name) {
+    var headers = SCHEMA[name];
+    var rows = readAll_(name);
+    var lines = [headers.join(',')];
+    rows.forEach(function (row) {
+      var cells = headers.map(function (h) {
+        var v = row[h];
+        if (v === null || v === undefined) return '';
+        var s = String(v).replace(/"/g, '""');
+        return s.indexOf(',') !== -1 || s.indexOf('"') !== -1 || s.indexOf('\n') !== -1
+          ? '"' + s + '"' : s;
+      });
+      lines.push(cells.join(','));
+    });
+    csvOut.sheets[name] = lines.join('\n');
+  });
+  return csvOut;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1040,6 +1082,7 @@ function dispatch_(action, payload, user, idem) {
     case 'createGoal':              return createGoal_(payload, user);
     case 'updateGoal':              return updateGoal_(payload, user);
     case 'deleteGoal':              return deleteGoal_(payload, user);
+    case 'exportData':              return exportData_(payload);
     case 'uploadReceipt':           return uploadReceipt_(payload, user);
     case 'uploadAvatar':            return uploadAvatar_(payload, user);
     default:
