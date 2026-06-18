@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { v4 as uuid } from 'uuid';
 import { differenceInCalendarDays } from 'date-fns';
-import { Plus, Pencil, Trash2, CalendarClock, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, CalendarClock, AlertTriangle, CheckCircle2, X } from 'lucide-react';
 import { useCreditCards, useUpsertCreditCard, useDeleteCreditCard } from '@/hooks/useCreditCards';
 import { useUiStore } from '@/stores/uiStore';
 import { useAccounts } from '@/hooks/useAccounts';
@@ -10,7 +10,6 @@ import { useTransactions } from '@/hooks/useTransactions';
 import { computeCardCycle, type CreditCard, type AlertLevel } from '@/core/creditCard';
 import { formatLongDate, formatDayMonth, parseISO, currentYearMonth, todayISO } from '@/core/dates';
 import { formatMoney, money } from '@/core/money';
-import { BottomSheet } from '@/ui/components/BottomSheet';
 import { Button } from '@/ui/components/Button';
 import { EmptyState } from '@/ui/components/EmptyState';
 import type { CurrencyCode } from '@/core/money';
@@ -263,9 +262,18 @@ export default function CardsScreen() {
         )}
       </div>
 
-      {/* ── Formulario ── */}
-      <BottomSheet open={sheet} title={isEditing ? 'Editar tarjeta' : 'Nueva tarjeta'} onClose={() => setSheet(false)}>
-        <div className={styles.form}>
+      {/* ── Formulario (modal centrado) ── */}
+      {sheet &&
+        createPortal(
+          <div className={styles.overlay} onClick={() => setSheet(false)}>
+            <div className={styles.formModal} onClick={(e) => e.stopPropagation()}>
+              <div className={styles.formHeader}>
+                <h2 className={styles.formTitle}>{isEditing ? 'Editar tarjeta' : 'Nueva tarjeta'}</h2>
+                <button className={styles.formClose} onClick={() => setSheet(false)} type="button" aria-label="Cerrar">
+                  <X size={20} strokeWidth={2} />
+                </button>
+              </div>
+              <div className={styles.form}>
           <div className={styles.field}>
             <label className={styles.fieldLabel}>Nombre de la tarjeta</label>
             <input
@@ -331,8 +339,11 @@ export default function CardsScreen() {
           <Button block onClick={handleSave} disabled={!form.name.trim()}>
             {isEditing ? 'Guardar cambios' : 'Agregar tarjeta'}
           </Button>
-        </div>
-      </BottomSheet>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
 
       {/* ── Confirmar borrado ── */}
       {confirmId &&
