@@ -190,7 +190,6 @@
 }
 
 .catIcon {
-  font-size: 20px;
   width: 32px;
   height: 32px;
   display: flex;
@@ -198,8 +197,8 @@
   justify-content: center;
   background: var(--color-surface-2);
   border-radius: var(--radius-input);
-  text-align: center;
   flex-shrink: 0;
+  color: var(--color-text-secondary);
 }
 
 .listEmpty {
@@ -426,8 +425,11 @@
 /* ── Emoji icon picker ── */
 .iconGrid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(8, 1fr);
   gap: var(--space-1);
+  max-height: 200px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .iconBtn {
@@ -436,11 +438,11 @@
   border-radius: var(--radius-input);
   border: 1.5px solid transparent;
   background: var(--color-surface-2);
-  font-size: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  color: var(--color-text-secondary);
   transition: all var(--transition-fast);
 }
 
@@ -448,6 +450,7 @@
   border-color: var(--color-primary);
   background: color-mix(in srgb, var(--color-primary) 15%, var(--color-surface));
   box-shadow: 0 0 0 1px var(--color-primary);
+  color: var(--color-primary);
 }
 
 /* ── Confirm overlay ── */

@@ -10,6 +10,7 @@ import { useAccounts } from '@/hooks/useAccounts';
 import { useCreateTransaction } from '@/hooks/useTransactions';
 import { currentYearMonth, todayISO } from '@/core/dates';
 import { parseMoney, formatAmount, money, ZERO } from '@/core/money';
+import { CategoryIcon } from '@/ui/components/CategoryIcon';
 import { t } from '@/i18n/es';
 import type { TransactionKind } from '@/api/types';
 import type { CurrencyCode } from '@/core/money';
@@ -127,7 +128,7 @@ export function RegisterScreen() {
                   onClick={() => setCategoryId(cat.id)}
                   aria-pressed={categoryId === cat.id}
                 >
-                  <span className={styles.catIcon}>{cat.icon || '•'}</span>
+                  <span className={styles.catIcon}><CategoryIcon slug={cat.icon} size={18} /></span>
                   <span className={styles.catName}>{cat.name}</span>
                 </button>
               ))}

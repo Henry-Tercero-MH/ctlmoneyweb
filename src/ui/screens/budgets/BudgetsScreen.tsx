@@ -12,6 +12,7 @@ import { Button } from '@/ui/components/Button';
 import { BottomSheet } from '@/ui/components/BottomSheet';
 import { Skeleton } from '@/ui/components/Skeleton';
 import { EmptyState } from '@/ui/components/EmptyState';
+import { CategoryIcon } from '@/ui/components/CategoryIcon';
 import { t } from '@/i18n/es';
 import type { BudgetPeriod, CreateBudgetPayload } from '@/api/types';
 import type { CurrencyCode } from '@/core/money';
@@ -98,7 +99,7 @@ export default function BudgetsScreen() {
               <Card key={budget.id} className={styles.budgetCard}>
                 <div className={styles.budgetTop}>
                   <div className={styles.budgetMeta}>
-                    <span className={styles.catIcon}>{cat?.icon ?? '•'}</span>
+                    <span className={styles.catIcon}><CategoryIcon slug={cat?.icon ?? 'otros'} size={18} /></span>
                     <div>
                       <p className={styles.catName}>{cat?.name ?? '—'}</p>
                       <p className={styles.period}>

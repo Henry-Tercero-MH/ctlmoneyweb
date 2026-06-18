@@ -106,8 +106,17 @@
 }
 
 .catIcon {
-  font-size: 22px;
-  line-height: 1;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+.catBtn.catSelected .catIcon {
+  color: var(--color-primary);
 }
 
 .catName {

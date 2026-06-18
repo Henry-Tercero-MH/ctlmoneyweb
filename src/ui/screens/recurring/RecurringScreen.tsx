@@ -11,6 +11,7 @@ import { Button } from '@/ui/components/Button';
 import { BottomSheet } from '@/ui/components/BottomSheet';
 import { Skeleton } from '@/ui/components/Skeleton';
 import { EmptyState } from '@/ui/components/EmptyState';
+import { CategoryIcon } from '@/ui/components/CategoryIcon';
 import { t } from '@/i18n/es';
 import type { RecurringFrequency, TransactionKind, CreateRecurringPayload, UpdateRecurringPayload } from '@/api/types';
 import type { CurrencyCode } from '@/core/money';
@@ -129,7 +130,7 @@ export default function RecurringScreen() {
               <Card key={rule.id} className={`${styles.ruleCard} ${!isActive ? styles.ruleInactive : ''}`}>
                 <div className={styles.ruleTop}>
                   <div className={styles.ruleMeta}>
-                    <span className={styles.catIcon}>{cat?.icon ?? '•'}</span>
+                    <span className={styles.catIcon}><CategoryIcon slug={cat?.icon ?? 'otros'} size={18} /></span>
                     <div>
                       <p className={styles.catName}>{cat?.name ?? '—'}</p>
                       <p className={styles.ruleDetail}>

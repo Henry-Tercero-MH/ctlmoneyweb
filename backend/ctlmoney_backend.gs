@@ -386,19 +386,30 @@ function setupNamedRanges_(ss) {
 function seedCategories_(ss) {
   var sheet = ss.getSheetByName('categories');
   if (sheet.getLastRow() > 1) return;
-  var expense = [
-    'Vivienda', 'Alimentación', 'Transporte', 'Salud', 'Educación', 'Deudas',
-    'Entretenimiento', 'Ropa', 'Servicios', 'Suscripciones', 'Regalos', 'Mascotas',
-    'Imprevistos', 'Otros',
+  // Los slugs de icon deben coincidir exactamente con ICON_MAP del frontend (CategoryIcon.tsx)
+  var cats = [
+    { name: 'Vivienda',        kind: 'expense', icon: 'vivienda',        color: '#d4a017' },
+    { name: 'Alimentación',    kind: 'expense', icon: 'alimentacion',    color: '#d4a017' },
+    { name: 'Transporte',      kind: 'expense', icon: 'transporte',      color: '#d4a017' },
+    { name: 'Salud',           kind: 'expense', icon: 'salud',           color: '#d4a017' },
+    { name: 'Educación',       kind: 'expense', icon: 'educacion',       color: '#d4a017' },
+    { name: 'Deudas',          kind: 'expense', icon: 'deudas',          color: '#d4a017' },
+    { name: 'Entretenimiento', kind: 'expense', icon: 'entretenimiento', color: '#d4a017' },
+    { name: 'Ropa',            kind: 'expense', icon: 'ropa',            color: '#d4a017' },
+    { name: 'Servicios',       kind: 'expense', icon: 'servicios',       color: '#d4a017' },
+    { name: 'Suscripciones',   kind: 'expense', icon: 'suscripciones',   color: '#d4a017' },
+    { name: 'Regalos',         kind: 'expense', icon: 'regalos',         color: '#d4a017' },
+    { name: 'Mascotas',        kind: 'expense', icon: 'mascotas',        color: '#d4a017' },
+    { name: 'Imprevistos',     kind: 'expense', icon: 'imprevistos',     color: '#d4a017' },
+    { name: 'Otros',           kind: 'expense', icon: 'otros',           color: '#d4a017' },
+    { name: 'Salario',         kind: 'income',  icon: 'salario',         color: '#3f7a3a' },
+    { name: 'Negocio',         kind: 'income',  icon: 'negocio',         color: '#3f7a3a' },
+    { name: 'Freelance',       kind: 'income',  icon: 'freelance',       color: '#3f7a3a' },
+    { name: 'Inversiones',     kind: 'income',  icon: 'inversiones',     color: '#3f7a3a' },
+    { name: 'Otros ingresos',  kind: 'income',  icon: 'otros-ingresos',  color: '#3f7a3a' },
   ];
-  var income = ['Salario', 'Negocio', 'Freelance', 'Inversiones', 'Otros ingresos'];
-  var rows = [];
-  var order = 0;
-  expense.forEach(function (name) {
-    rows.push([Utilities.getUuid(), name, 'expense', slugIcon_(name), '#d4a017', '', true, order++]);
-  });
-  income.forEach(function (name) {
-    rows.push([Utilities.getUuid(), name, 'income', slugIcon_(name), '#3f7a3a', '', true, order++]);
+  var rows = cats.map(function (c, i) {
+    return [Utilities.getUuid(), c.name, c.kind, c.icon, c.color, '', true, i];
   });
   sheet.getRange(2, 1, rows.length, SCHEMA.categories.length).setValues(rows);
 }

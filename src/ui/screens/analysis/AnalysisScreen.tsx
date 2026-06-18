@@ -6,6 +6,7 @@ import { formatMoney, money } from '@/core/money';
 import { useUiStore } from '@/stores/uiStore';
 import { Skeleton } from '@/ui/components/Skeleton';
 import { Card } from '@/ui/components/Card';
+import { CategoryIcon } from '@/ui/components/CategoryIcon';
 import { t } from '@/i18n/es';
 import type { CurrencyCode } from '@/core/money';
 import styles from './AnalysisScreen.module.css';
@@ -106,7 +107,7 @@ export default function AnalysisScreen() {
   // Mapa id→categoría
   const catMap = useMemo(() => {
     const m: Record<string, { name: string; icon: string; color: string }> = {};
-    for (const c of categories) m[c.id] = { name: c.name, icon: c.icon ?? '•', color: c.color ?? '#8a8370' };
+    for (const c of categories) m[c.id] = { name: c.name, icon: c.icon ?? 'otros', color: c.color ?? '#8a8370' };
     return m;
   }, [categories]);
 
@@ -122,7 +123,7 @@ export default function AnalysisScreen() {
         pct: (row.amount_minor / total) * 100,
         color: SEGMENT_COLORS[i % SEGMENT_COLORS.length] as string,
         label: catMap[row.category_id]?.name ?? '—',
-        icon: catMap[row.category_id]?.icon ?? '•',
+        icon: catMap[row.category_id]?.icon ?? 'otros',
       }))
       .filter((s) => s.amount_minor > 0);
   }, [summary, catMap]);
@@ -205,7 +206,7 @@ export default function AnalysisScreen() {
                     {slices.slice(0, 6).map((s, i) => (
                       <div key={i} className={styles.legendRow}>
                         <span className={styles.legendDot} style={{ background: s.color }} />
-                        <span className={styles.legendIcon}>{s.icon}</span>
+                        <span className={styles.legendIcon}><CategoryIcon slug={s.icon} size={14} /></span>
                         <span className={styles.legendName}>{s.label}</span>
                         <span className={styles.legendPct}>{s.pct.toFixed(0)}%</span>
                       </div>
@@ -226,7 +227,7 @@ export default function AnalysisScreen() {
                   {slices.map((s, i) => (
                     <div key={i} className={styles.barRow}>
                       <div className={styles.barMeta}>
-                        <span className={styles.barIcon}>{s.icon}</span>
+                        <span className={styles.barIcon}><CategoryIcon slug={s.icon} size={15} /></span>
                         <span className={styles.barName}>{s.label}</span>
                         <span className={styles.barAmount}>
                           {formatMoney(money(s.amount_minor), currency)}

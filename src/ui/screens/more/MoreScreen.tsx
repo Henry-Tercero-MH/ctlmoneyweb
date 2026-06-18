@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { v4 as uuid } from 'uuid';
 import { Sun, Moon, ChevronRight, Plus, Trash2, Pencil, PiggyBank, RefreshCw, Target, Download, FileJson, FileText } from 'lucide-react';
 import { exportApi } from '@/api/endpoints/export';
+import { CategoryIcon, ICON_OPTIONS } from '@/ui/components/CategoryIcon';
 import { useAuthStore } from '@/stores/authStore';
 import { useUiStore } from '@/stores/uiStore';
 import { useAccounts, useCreateAccount, useUpdateAccount, useArchiveAccount } from '@/hooks/useAccounts';
@@ -28,7 +29,6 @@ const CURRENCIES: { value: CurrencyCode; label: string }[] = [
 
 const ACCOUNT_TYPES: AccountType[] = ['cash', 'bank', 'card', 'savings', 'investment'];
 
-const CATEGORY_ICONS = ['🍔','🚗','🏠','💊','📚','🎮','👗','💡','📱','🎁','🐾','✈️','💰','💼','📈','🛒','🎵','⚽','🏋️','💅'];
 
 const THEME_OPTIONS = [
   { value: 'light' as const, label: t.more.themeLight },
@@ -39,7 +39,7 @@ type AccountForm = { id: string; name: string; type: AccountType; initial_balanc
 type CategoryForm = { id: string; name: string; kind: CategoryKind; icon: string; color: string };
 
 const BLANK_ACCOUNT: AccountForm = { id: '', name: '', type: 'cash', initial_balance_minor: '0', currency: 'GTQ' };
-const BLANK_CATEGORY: CategoryForm = { id: '', name: '', kind: 'expense', icon: '🏷️', color: '#f5c800' };
+const BLANK_CATEGORY: CategoryForm = { id: '', name: '', kind: 'expense', icon: 'otros', color: '#f5c800' };
 
 export default function MoreScreen() {
   const signOut = useAuthStore((s) => s.signOut);
@@ -290,7 +290,7 @@ export default function MoreScreen() {
                 <div key={cat.id}
                   className={`${styles.listRow} ${i < customCategories.length - 1 ? styles.rowBorder : ''}`}>
                   <div className={styles.catRow}>
-                    <span className={styles.catIcon}>{cat.icon || '•'}</span>
+                    <span className={styles.catIcon}><CategoryIcon slug={cat.icon || 'otros'} size={18} /></span>
                     <div>
                       <p className={styles.listRowName}>{cat.name}</p>
                       <p className={styles.listRowSub}>
@@ -422,11 +422,12 @@ export default function MoreScreen() {
           <div className={styles.field}>
             <label className={styles.fieldLabel}>Ícono</label>
             <div className={styles.iconGrid}>
-              {CATEGORY_ICONS.map((ic) => (
-                <button key={ic} type="button"
-                  className={`${styles.iconBtn} ${categoryForm.icon === ic ? styles.iconActive : ''}`}
-                  onClick={() => setCategoryForm((f) => ({ ...f, icon: ic }))}>
-                  {ic}
+              {ICON_OPTIONS.map(({ slug, Icon }) => (
+                <button key={slug} type="button"
+                  className={`${styles.iconBtn} ${categoryForm.icon === slug ? styles.iconActive : ''}`}
+                  onClick={() => setCategoryForm((f) => ({ ...f, icon: slug }))}
+                  title={slug}>
+                  <Icon size={18} strokeWidth={1.75} />
                 </button>
               ))}
             </div>
