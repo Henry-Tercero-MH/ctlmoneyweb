@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuid } from 'uuid';
-import { Sun, Moon, ChevronRight, Plus, Trash2, Pencil, PiggyBank, RefreshCw, Target, Download, FileJson, FileText, MonitorDown } from 'lucide-react';
+import { Sun, Moon, ChevronRight, Plus, Trash2, Pencil, PiggyBank, RefreshCw, Target, Download, FileJson, FileText, MonitorDown, CreditCard, Calculator } from 'lucide-react';
 import { usePwaInstall } from '@/hooks/usePwaInstall';
 import { exportApi } from '@/api/endpoints/export';
 import { CategoryIcon, ICON_OPTIONS } from '@/ui/components/CategoryIcon';
 import { useAuthStore } from '@/stores/authStore';
 import { useUiStore } from '@/stores/uiStore';
 import { useAccounts, useCreateAccount, useUpdateAccount, useArchiveAccount } from '@/hooks/useAccounts';
-import { useCategories, useCreateCategory, useDeleteCategory } from '@/hooks/useCategories';
+import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from '@/hooks/useCategories';
 import { useSetSetting } from '@/hooks/useSettings';
 import { Card } from '@/ui/components/Card';
 import { SegmentedControl } from '@/ui/components/SegmentedControl';
@@ -59,6 +59,7 @@ export default function MoreScreen() {
   const updateAccount = useUpdateAccount();
   const archiveAccount = useArchiveAccount();
   const createCategory = useCreateCategory();
+  const updateCategory = useUpdateCategory();
   const deleteCategory = useDeleteCategory();
 
   // ── Account sheet ──
@@ -103,6 +104,8 @@ export default function MoreScreen() {
     else await createAccount.mutateAsync(payload);
   }
 
+  const isEditingCategory = categories.some((c) => c.id === categoryForm.id);
+
   async function handleSaveCategory() {
     const payload: UpsertCategoryPayload = {
       id: categoryForm.id || uuid(),
@@ -113,7 +116,11 @@ export default function MoreScreen() {
       sort_order: 999,
     };
     setCategorySheet(false);
-    await createCategory.mutateAsync(payload);
+    if (isEditingCategory) {
+      await updateCategory.mutateAsync(payload);
+    } else {
+      await createCategory.mutateAsync(payload);
+    }
     setCategoryForm(BLANK_CATEGORY);
   }
 
@@ -128,7 +135,7 @@ export default function MoreScreen() {
   }
 
   // ── Export ──
-  const [exporting, setExporting] = useState<'json' | 'csv' | null>(null);
+  const [exporting, setExporting] = useState<'json' | 'csv' | 'excel' | 'pdf' | null>(null);
 
   async function handleExportJson() {
     setExporting('json');
@@ -143,12 +150,56 @@ export default function MoreScreen() {
     setExporting('csv');
     try {
       const result = await exportApi.csv();
-      // ZIP simulado: un CSV por hoja, concatenados con separador legible
       const content = Object.entries(result.sheets)
         .map(([name, csv]) => `### ${name}\n${csv}`)
         .join('\n\n');
       const blob = new Blob([content], { type: 'text/csv;charset=utf-8' });
       triggerDownload(blob, `ctlmoney_${result.exported_at.slice(0, 10)}.csv`);
+    } finally { setExporting(null); }
+  }
+
+  async function handleExportExcel() {
+    setExporting('excel');
+    try {
+      const result = await exportApi.json();
+      const { utils, writeFile } = await import('xlsx');
+      const wb = utils.book_new();
+      for (const [sheetName, rows] of Object.entries(result.data)) {
+        const ws = utils.json_to_sheet(rows as object[]);
+        utils.book_append_sheet(wb, ws, sheetName.slice(0, 31));
+      }
+      writeFile(wb, `ctlmoney_${result.exported_at.slice(0, 10)}.xlsx`);
+    } finally { setExporting(null); }
+  }
+
+  async function handleExportPdf() {
+    setExporting('pdf');
+    try {
+      const result = await exportApi.json();
+      const { default: jsPDF } = await import('jspdf');
+      const { default: autoTable } = await import('jspdf-autotable');
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      const date = result.exported_at.slice(0, 10);
+      let first = true;
+      for (const [sheetName, rows] of Object.entries(result.data)) {
+        const arr = rows as Record<string, unknown>[];
+        if (arr.length === 0) continue;
+        const firstRow = arr[0];
+        if (!firstRow) continue;
+        if (!first) doc.addPage();
+        first = false;
+        doc.setFontSize(14);
+        doc.text(sheetName, 14, 16);
+        const headers = Object.keys(firstRow);
+        autoTable(doc, {
+          startY: 22,
+          head: [headers],
+          body: arr.map((r) => headers.map((h) => String(r[h] ?? ''))),
+          styles: { fontSize: 7 },
+          headStyles: { fillColor: [245, 200, 0], textColor: 0 },
+        });
+      }
+      doc.save(`ctlmoney_${date}.pdf`);
     } finally { setExporting(null); }
   }
 
@@ -229,11 +280,27 @@ export default function MoreScreen() {
             </div>
             <ChevronRight size={16} strokeWidth={1.75} className={styles.rowChevron} />
           </div>
-          <div className={styles.listRow}
+          <div className={`${styles.listRow} ${styles.rowBorder}`}
             onClick={() => navigate('/metas')} role="button" tabIndex={0}>
             <div className={styles.catRow}>
               <span className={styles.catIcon}><Target size={18} strokeWidth={1.75} /></span>
               <p className={styles.listRowName}>{t.goals.title}</p>
+            </div>
+            <ChevronRight size={16} strokeWidth={1.75} className={styles.rowChevron} />
+          </div>
+          <div className={`${styles.listRow} ${styles.rowBorder}`}
+            onClick={() => navigate('/cuotas')} role="button" tabIndex={0}>
+            <div className={styles.catRow}>
+              <span className={styles.catIcon}><CreditCard size={18} strokeWidth={1.75} /></span>
+              <p className={styles.listRowName}>Cuotas sin interés</p>
+            </div>
+            <ChevronRight size={16} strokeWidth={1.75} className={styles.rowChevron} />
+          </div>
+          <div className={styles.listRow}
+            onClick={() => navigate('/calculadoras')} role="button" tabIndex={0}>
+            <div className={styles.catRow}>
+              <span className={styles.catIcon}><Calculator size={18} strokeWidth={1.75} /></span>
+              <p className={styles.listRowName}>Calculadoras financieras</p>
             </div>
             <ChevronRight size={16} strokeWidth={1.75} className={styles.rowChevron} />
           </div>
@@ -300,10 +367,17 @@ export default function MoreScreen() {
                       </p>
                     </div>
                   </div>
-                  <button className={`${styles.rowActionBtn} ${styles.rowDeleteBtn}`}
-                    onClick={() => setConfirmDeleteCat(cat.id)} type="button" aria-label={t.common.delete}>
-                    <Trash2 size={14} strokeWidth={2} />
-                  </button>
+                  <div className={styles.rowActions}>
+                    <button className={styles.rowActionBtn}
+                      onClick={() => { setCategoryForm({ id: cat.id, name: cat.name, kind: cat.kind, icon: cat.icon || 'otros', color: cat.color || '#f5c800' }); setCategorySheet(true); }}
+                      type="button" aria-label={t.common.edit}>
+                      <Pencil size={14} strokeWidth={1.75} />
+                    </button>
+                    <button className={`${styles.rowActionBtn} ${styles.rowDeleteBtn}`}
+                      onClick={() => setConfirmDeleteCat(cat.id)} type="button" aria-label={t.common.delete}>
+                      <Trash2 size={14} strokeWidth={2} />
+                    </button>
+                  </div>
                 </div>
               ))
             )}
@@ -327,16 +401,42 @@ export default function MoreScreen() {
                 ? <span className={styles.exportSpinner}>…</span>
                 : <Download size={16} strokeWidth={1.75} className={styles.rowChevron} />}
             </div>
-            <div className={styles.listRow}
+            <div className={`${styles.listRow} ${styles.rowBorder}`}
               onClick={handleExportCsv} role="button" tabIndex={0}>
               <div className={styles.catRow}>
                 <span className={styles.catIcon}><FileText size={18} strokeWidth={1.75} /></span>
                 <div>
                   <p className={styles.listRowName}>{t.more.exportCsv}</p>
-                  <p className={styles.listRowSub}>Compatible con Excel y Google Sheets</p>
+                  <p className={styles.listRowSub}>Compatible con Google Sheets</p>
                 </div>
               </div>
               {exporting === 'csv'
+                ? <span className={styles.exportSpinner}>…</span>
+                : <Download size={16} strokeWidth={1.75} className={styles.rowChevron} />}
+            </div>
+            <div className={`${styles.listRow} ${styles.rowBorder}`}
+              onClick={handleExportExcel} role="button" tabIndex={0}>
+              <div className={styles.catRow}>
+                <span className={styles.catIcon}><FileText size={18} strokeWidth={1.75} /></span>
+                <div>
+                  <p className={styles.listRowName}>Exportar Excel (.xlsx)</p>
+                  <p className={styles.listRowSub}>Abre directo en Microsoft Excel</p>
+                </div>
+              </div>
+              {exporting === 'excel'
+                ? <span className={styles.exportSpinner}>…</span>
+                : <Download size={16} strokeWidth={1.75} className={styles.rowChevron} />}
+            </div>
+            <div className={styles.listRow}
+              onClick={handleExportPdf} role="button" tabIndex={0}>
+              <div className={styles.catRow}>
+                <span className={styles.catIcon}><FileText size={18} strokeWidth={1.75} /></span>
+                <div>
+                  <p className={styles.listRowName}>Exportar PDF</p>
+                  <p className={styles.listRowSub}>Tablas de todas las hojas en PDF</p>
+                </div>
+              </div>
+              {exporting === 'pdf'
                 ? <span className={styles.exportSpinner}>…</span>
                 : <Download size={16} strokeWidth={1.75} className={styles.rowChevron} />}
             </div>
@@ -413,7 +513,7 @@ export default function MoreScreen() {
       </BottomSheet>
 
       {/* ══ Sheet — Nueva categoría ══ */}
-      <BottomSheet open={categorySheet} title={t.more.addCategory} onClose={() => setCategorySheet(false)}>
+      <BottomSheet open={categorySheet} title={isEditingCategory ? t.common.edit + ' categoría' : t.more.addCategory} onClose={() => setCategorySheet(false)}>
         <div className={styles.form}>
           <div className={styles.field}>
             <label className={styles.fieldLabel}>{t.more.name}</label>

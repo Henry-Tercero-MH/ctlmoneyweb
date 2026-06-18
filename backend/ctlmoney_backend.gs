@@ -41,6 +41,10 @@ var SCHEMA = {
   goals: [
     'id', 'name', 'target_minor', 'target_date', 'linked_account_id', 'created_at',
   ],
+  installments: [
+    'id', 'name', 'total_minor', 'installment_count', 'paid_count',
+    'account_id', 'start_date', 'created_at',
+  ],
   settings: ['key', 'value'],
   audit_log: ['timestamp', 'action', 'entity', 'entity_id', 'payload_hash', 'user_email'],
   _idempotency: ['idempotency_id', 'created_at'],
@@ -274,6 +278,7 @@ var SEEDS = {
   budgets:        function(ss) { seedBudgets_(ss); },
   recurring_rules:function(ss) { seedRecurringRules_(ss); },
   goals:          function(ss) { seedGoals_(ss); },
+  installments:   function(ss) { seedInstallments_(ss); },
 };
 
 /**
@@ -348,10 +353,11 @@ function migrateSchema(seed) {
   return report;
 }
 
-// Seeds vacíos para hojas de Fase 2/3 — rellénalos cuando implementes esas fases.
+// Seeds vacíos para hojas de Fase 2/3/4
 function seedBudgets_(ss) { /* sin datos iniciales */ }
 function seedRecurringRules_(ss) { /* sin datos iniciales */ }
 function seedGoals_(ss) { /* sin datos iniciales */ }
+function seedInstallments_(ss) { /* sin datos iniciales */ }
 
 function writeHeaders_(sheet, headers) {
   var range = sheet.getRange(1, 1, 1, headers.length);
@@ -903,12 +909,66 @@ function deleteGoal_(payload, user) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// INSTALLMENTS — Compras en cuotas sin interés
+// ─────────────────────────────────────────────────────────────────────────────
+
+function listInstallments_() {
+  return readAll_('installments');
+}
+
+function createInstallment_(payload, user) {
+  if (!payload.id || !payload.name) throw new ApiErr('VALIDATION_ERROR', 'Faltan datos.');
+  if (!Number.isFinite(Number(payload.total_minor)) || Number(payload.total_minor) <= 0)
+    throw new ApiErr('VALIDATION_ERROR', 'Monto inválido.');
+  var count = Math.round(Number(payload.installment_count));
+  if (!count || count < 1) throw new ApiErr('VALIDATION_ERROR', 'Número de cuotas inválido.');
+  var row = {
+    id: payload.id,
+    name: String(payload.name).trim(),
+    total_minor: Math.round(Number(payload.total_minor)),
+    installment_count: count,
+    paid_count: 0,
+    account_id: payload.account_id || '',
+    start_date: payload.start_date || nowIso_().slice(0, 10),
+    created_at: nowIso_(),
+  };
+  appendRow_('installments', row);
+  audit_('createInstallment', 'installments', row.id, payload, user.email);
+  return row;
+}
+
+function updateInstallment_(payload, user) {
+  if (!payload.id) throw new ApiErr('VALIDATION_ERROR', 'Falta id.');
+  var existing = readAll_('installments').filter(function(r) { return r.id === payload.id; })[0];
+  if (!existing) throw new ApiErr('NOT_FOUND', 'Cuota no encontrada.');
+  var row = {
+    id: payload.id,
+    name: String(payload.name || existing.name).trim(),
+    total_minor: Math.round(Number(payload.total_minor) || existing.total_minor),
+    installment_count: Math.round(Number(payload.installment_count) || existing.installment_count),
+    paid_count: Math.max(0, Math.round(Number(payload.paid_count !== undefined ? payload.paid_count : existing.paid_count))),
+    account_id: payload.account_id !== undefined ? payload.account_id : existing.account_id,
+    start_date: payload.start_date || existing.start_date,
+    created_at: existing.created_at,
+  };
+  updateRow_('installments', payload.id, row);
+  audit_('updateInstallment', 'installments', payload.id, payload, user.email);
+  return row;
+}
+
+function deleteInstallment_(payload, user) {
+  var res = deleteRow_('installments', payload.id);
+  audit_('deleteInstallment', 'installments', payload.id, payload, user.email);
+  return res;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // EXPORT — Volcado completo de datos
 // ─────────────────────────────────────────────────────────────────────────────
 
 function exportData_(payload) {
   var format = payload && payload.format === 'csv' ? 'csv' : 'json';
-  var sheets = ['accounts', 'categories', 'transactions', 'budgets', 'recurring_rules', 'goals'];
+  var sheets = ['accounts', 'categories', 'transactions', 'budgets', 'recurring_rules', 'goals', 'installments'];
 
   if (format === 'json') {
     var out = { exported_at: nowIso_(), version: 1, data: {} };
@@ -1196,6 +1256,10 @@ function dispatch_(action, payload, user, idem) {
     case 'createGoal':              return createGoal_(payload, user);
     case 'updateGoal':              return updateGoal_(payload, user);
     case 'deleteGoal':              return deleteGoal_(payload, user);
+    case 'listInstallments':        return listInstallments_();
+    case 'createInstallment':       return createInstallment_(payload, user);
+    case 'updateInstallment':       return updateInstallment_(payload, user);
+    case 'deleteInstallment':       return deleteInstallment_(payload, user);
     case 'exportData':              return exportData_(payload);
     case 'uploadReceipt':           return uploadReceipt_(payload, user);
     case 'uploadAvatar':            return uploadAvatar_(payload, user);

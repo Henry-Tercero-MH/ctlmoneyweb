@@ -179,3 +179,29 @@ export interface CreateGoalPayload {
 }
 
 export type UpdateGoalPayload = CreateGoalPayload;
+
+// ── Cuotas sin interés ──
+
+export interface InstallmentDTO {
+  id: string;
+  name: string;
+  total_minor: number;
+  installment_count: number;
+  paid_count: number;
+  account_id: string;
+  start_date: string;   // YYYY-MM-DD
+  created_at: string;
+}
+
+export interface CreateInstallmentPayload {
+  id: string;
+  name: string;
+  total_minor: number;
+  installment_count: number;
+  account_id?: string;
+  start_date?: string;
+}
+
+export interface UpdateInstallmentPayload extends CreateInstallmentPayload {
+  paid_count: number;
+}

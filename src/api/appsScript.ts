@@ -8,6 +8,7 @@ const NUMERIC_FIELDS = new Set([
   'amount_minor', 'initial_balance_minor', 'balance_minor',
   'limit_minor', 'target_minor', 'sort_order',
   'income_minor', 'expense_minor', 'net_minor',
+  'total_minor', 'installment_count', 'paid_count',
 ]);
 
 function coerceNumbers<T>(data: T): T {
