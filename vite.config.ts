@@ -1,29 +1,26 @@
-/// <reference types="vitest/config" />
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
-import path from 'node:path';
+import { fileURLToPath, URL } from 'url';
 
-// https://vitejs.dev/config/
 export default defineConfig({
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, 'src'),
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
   plugins: [
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      // El SW solo se registra en producción (devOptions.enabled = false).
       devOptions: { enabled: false },
       includeAssets: ['icons/apple-touch-icon.png', 'favicon.svg'],
       manifest: {
         name: 'ctlmoney',
         short_name: 'ctlmoney',
         description: 'Gestión integral de finanzas personales',
-        theme_color: '#0E0E0E',
-        background_color: '#E8B923',
+        theme_color: '#0a0a0a',
+        background_color: '#f5c800',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',
@@ -39,8 +36,6 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // CacheFirst para assets estáticos (precache automático).
-        // NetworkFirst para las llamadas al backend de Apps Script.
         runtimeCaching: [
           {
             urlPattern: ({ url }) => url.hostname.includes('script.google.com'),
@@ -55,10 +50,4 @@ export default defineConfig({
       },
     }),
   ],
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    setupFiles: [],
-    include: ['src/**/*.{test,spec}.{ts,tsx}'],
-  },
 });

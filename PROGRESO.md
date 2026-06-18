@@ -50,12 +50,12 @@ Se ejecuta **una fase a la vez** y se detiene para validación del usuario.
 - [x] React Query (`queryClient`) y hooks `useCategories`, `useAccounts`.
 
 ### En curso / pendiente de Fase 1
-- [ ] Hooks `useTransactions` (con optimistic update) y `useSettings`.
-- [ ] Auth: Google Sign-In (`@react-oauth/google`), pantallas Login y Onboarding.
-- [ ] Navegación + `AppShell` con tab bar y áreas seguras iOS.
-- [ ] Pantallas: Registrar (teclado numérico custom), Inicio (dashboard), Movimientos, Más.
-- [ ] `npm run build` + `lint` + `test` en verde.
-- [ ] `DECISIONS.md` y reporte de cierre de Fase 1.
+- [x] Hooks `useTransactions` (con optimistic update) y `useSettings`.
+- [x] Auth: Google Sign-In (`@react-oauth/google`), pantallas Login y Onboarding.
+- [x] Navegación + `AppShell` con tab bar y áreas seguras iOS.
+- [x] Pantallas: Registrar (teclado numérico custom), Inicio (dashboard), Movimientos, Más.
+- [x] `npm run build` + `lint` + `test` en verde.
+- [ ] `DECISIONS.md` y reporte de cierre de Fase 1 (pendiente validación del usuario).
 
 ---
 

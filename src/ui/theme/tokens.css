@@ -1,31 +1,32 @@
-/* ctlmoney — Sistema de diseño. Paleta "Mostaza + Negro".
+/* ctlmoney — Sistema de diseño. Paleta "Amarillo eléctrico + Negro".
    Toda pantalla consume estos tokens. Cero valores hardcodeados en componentes. */
 
 :root {
-  /* Fondos (modo claro) */
-  --color-bg: #faf7ef; /* marfil cálido */
-  --color-surface: #ffffff;
-  --color-surface-2: #f3eedd; /* superficies secundarias */
-  --color-border: #e6dfca;
+  /* Fondos — negro profundo como base */
+  --color-bg: #0a0a0a;
+  --color-surface: #111111;
+  --color-surface-2: #1a1a1a;
+  --color-border: #2a2a2a;
 
-  /* Primario — mostaza */
-  --color-primary: #d4a017; /* mostaza profunda */
-  --color-primary-dim: #b8870f; /* hover/active */
-  --color-on-primary: #161513; /* texto sobre mostaza (negro) */
+  /* Primario — amarillo eléctrico brillante */
+  --color-primary: #f5c800;
+  --color-primary-dim: #d4a800;
+  --color-primary-glow: rgba(245, 200, 0, 0.15);
+  --color-on-primary: #0a0a0a;
 
-  /* Acento — negro / grafito (usar con disciplina) */
-  --color-accent: #161513;
+  /* Acento */
+  --color-accent: #f5c800;
 
   /* Texto */
-  --color-text-primary: #161513; /* casi negro */
-  --color-text-secondary: #5c574a;
-  --color-text-disabled: #a8a193;
+  --color-text-primary: #f0ead0;
+  --color-text-secondary: #8a8370;
+  --color-text-disabled: #444038;
 
   /* Semánticos */
-  --color-income: #3f7a3a; /* verde sobrio */
-  --color-expense: #a8442c; /* terracota — no rojo alarma */
-  --color-warning: #b5841f;
-  --color-neutral: #5c574a;
+  --color-income: #4ade80;
+  --color-expense: #f87171;
+  --color-warning: #f5c800;
+  --color-neutral: #8a8370;
 
   /* Espaciado (escala 4pt) */
   --space-1: 4px;
@@ -37,11 +38,11 @@
   --space-12: 48px;
 
   /* Radios */
-  --radius-card: 14px;
-  --radius-input: 10px;
+  --radius-card: 16px;
+  --radius-input: 12px;
   --radius-pill: 999px;
 
-  /* Tipografía — escala iOS-friendly */
+  /* Tipografía */
   --font-sans:
     -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, system-ui, sans-serif;
   --font-mono: 'SF Mono', ui-monospace, 'Menlo', monospace;
@@ -51,9 +52,10 @@
   --text-label: 15px;
   --text-caption: 13px;
 
-  /* Sombras (sutiles) */
-  --shadow-card: 0 1px 4px rgba(22, 21, 19, 0.06);
-  --shadow-modal: 0 8px 32px rgba(22, 21, 19, 0.18);
+  /* Sombras con tinte amarillo */
+  --shadow-card: 0 1px 6px rgba(0, 0, 0, 0.5);
+  --shadow-modal: 0 8px 40px rgba(0, 0, 0, 0.7);
+  --shadow-primary: 0 0 20px rgba(245, 200, 0, 0.25);
 
   /* Transiciones */
   --transition-fast: 150ms ease;
@@ -64,27 +66,30 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-[data-theme='dark'] {
-  --color-bg: #0e0e0e; /* negro */
-  --color-surface: #1a1916;
-  --color-surface-2: #232118;
-  --color-border: #322f25;
+/* Modo claro — versión más suave pero sigue siendo bold */
+[data-theme='light'] {
+  --color-bg: #faf7ef;
+  --color-surface: #ffffff;
+  --color-surface-2: #f3eedd;
+  --color-border: #e6dfca;
 
-  --color-primary: #e8b923; /* mostaza brillante sobre negro */
-  --color-primary-dim: #d4a017;
+  --color-primary: #d4a017;
+  --color-primary-dim: #b8870f;
+  --color-primary-glow: rgba(212, 160, 23, 0.12);
   --color-on-primary: #161513;
 
-  --color-accent: #e8b923;
+  --color-accent: #161513;
 
-  --color-text-primary: #f4f0e4;
-  --color-text-secondary: #b3ad9c;
-  --color-text-disabled: #6b665a;
+  --color-text-primary: #161513;
+  --color-text-secondary: #5c574a;
+  --color-text-disabled: #a8a193;
 
-  --color-income: #6fae67;
-  --color-expense: #d97a5e;
-  --color-warning: #e0b450;
-  --color-neutral: #b3ad9c;
+  --color-income: #1a7a3a;
+  --color-expense: #c0392b;
+  --color-warning: #b5841f;
+  --color-neutral: #5c574a;
 
-  --shadow-card: 0 1px 4px rgba(0, 0, 0, 0.4);
-  --shadow-modal: 0 8px 32px rgba(0, 0, 0, 0.6);
+  --shadow-card: 0 1px 4px rgba(22, 21, 19, 0.08);
+  --shadow-modal: 0 8px 32px rgba(22, 21, 19, 0.18);
+  --shadow-primary: 0 0 16px rgba(212, 160, 23, 0.2);
 }

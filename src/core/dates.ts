@@ -59,4 +59,14 @@ export function monthBounds(yearMonth: string): { start: string; end: string } {
   };
 }
 
+/** Alias para uso en listas: "Hoy", "Ayer", o "d de MMMM". */
+export function formatDate(isoDate: string): string {
+  const d = parseISO(isoDate);
+  const today = format(new Date(), 'yyyy-MM-dd');
+  const yesterday = format(new Date(Date.now() - 86400000), 'yyyy-MM-dd');
+  if (isoDate === today) return 'Hoy';
+  if (isoDate === yesterday) return 'Ayer';
+  return format(d, "d 'de' MMMM", { locale: es });
+}
+
 export { isSameDay, addDays, addWeeks, addMonths, addYears, parseISO, format };

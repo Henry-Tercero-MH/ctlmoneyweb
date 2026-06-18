@@ -1,0 +1,81 @@
+.shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  background: var(--color-bg);
+  overflow: hidden;
+}
+
+.main {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding-top: var(--safe-top);
+}
+
+/* ── Tab bar ── */
+.tabBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  padding-bottom: max(var(--safe-bottom), 8px);
+  padding-top: 8px;
+  position: relative;
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+.tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 64px;
+  min-height: 44px;
+  padding: 4px 8px;
+  color: var(--color-text-disabled);
+  transition: color var(--transition-fast);
+  text-decoration: none;
+}
+
+.tab.active {
+  color: var(--color-primary);
+}
+
+.tabLabel {
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* ── Botón + central — amarillo brillante con glow ── */
+.addBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  box-shadow: var(--shadow-primary);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  margin-top: -14px;
+}
+
+.addBtn:active {
+  transform: scale(0.92);
+  box-shadow: 0 0 8px rgba(245, 200, 0, 0.2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .addBtn:active {
+    transform: none;
+  }
+}

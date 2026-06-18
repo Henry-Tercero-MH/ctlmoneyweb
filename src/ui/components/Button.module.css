@@ -28,11 +28,19 @@
 .primary {
   background: var(--color-primary);
   color: var(--color-on-primary);
+  font-weight: 700;
+  box-shadow: var(--shadow-primary);
+  letter-spacing: 0.01em;
+}
+
+.primary:active {
+  box-shadow: none;
 }
 
 .secondary {
   background: var(--color-surface-2);
   color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
 }
 
 .ghost {
@@ -43,4 +51,5 @@
 .danger {
   background: var(--color-expense);
   color: #fff;
+  font-weight: 700;
 }

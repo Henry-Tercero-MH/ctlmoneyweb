@@ -14,7 +14,7 @@ interface UiState {
 }
 
 export const useUiStore = create<UiState>((set) => ({
-  theme: 'light',
+  theme: 'dark',
   activeCurrency: 'GTQ',
   registerOpen: false,
   setTheme: (theme) => {

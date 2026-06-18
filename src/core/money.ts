@@ -95,7 +95,7 @@ export function formatAmount(value: Money, currency: CurrencyCode = 'GTQ'): stri
  *  Ejemplos: "1,250.50" → 125050 ; "1.250,50" → 125050 ; "99" → 9900. */
 export function parseMoney(input: string, currency: CurrencyCode = 'GTQ'): Money {
   const meta = CURRENCIES[currency];
-  let s = input.trim().replace(/[^\d.,-]/g, '');
+  const s = input.trim().replace(/[^\d.,-]/g, '');
   if (s === '' || s === '-') return ZERO;
 
   const lastComma = s.lastIndexOf(',');

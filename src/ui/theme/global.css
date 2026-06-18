@@ -22,8 +22,9 @@ body {
   background: var(--color-bg);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  /* Evita el rebote de scroll en iOS dentro del shell */
   overscroll-behavior-y: none;
+  /* Evita zoom al tocar inputs en iOS */
+  touch-action: manipulation;
 }
 
 button {

@@ -1,0 +1,36 @@
+.keyboard {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+}
+
+.key {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Área táctil mínima 44pt — las teclas son grandes para input rápido */
+  min-height: 56px;
+  border-radius: var(--radius-card);
+  font-size: 22px;
+  font-weight: 500;
+  background: var(--color-surface-2);
+  color: var(--color-text-primary);
+  transition: background var(--transition-fast), transform 80ms ease;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.key:active {
+  background: var(--color-border);
+  transform: scale(0.95);
+}
+
+.del {
+  background: color-mix(in srgb, var(--color-expense) 12%, var(--color-surface-2));
+  color: var(--color-expense);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .key:active { transform: none; }
+}
