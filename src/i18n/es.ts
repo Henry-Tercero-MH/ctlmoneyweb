@@ -129,6 +129,28 @@ export const t = {
     selectCategory: 'Selecciona categoría',
   },
 
+  goals: {
+    title: 'Metas',
+    new: 'Nueva meta',
+    edit: 'Editar meta',
+    name: 'Nombre de la meta',
+    target: 'Monto objetivo',
+    targetDate: 'Fecha límite',
+    noDate: 'Sin fecha límite',
+    linkedAccount: 'Cuenta vinculada',
+    noAccount: 'Sin cuenta vinculada',
+    saved: 'Guardado',
+    of: 'de',
+    remaining: 'restante',
+    achieved: '¡Meta alcanzada!',
+    daysLeft: 'días restantes',
+    overdue: 'Vencida',
+    emptyTitle: 'Sin metas de ahorro',
+    emptyBody: 'Define un objetivo y sigue tu progreso.',
+    deleteConfirm: '¿Eliminar esta meta?',
+    addDeposit: 'Agregar depósito',
+  },
+
   recurring: {
     title: 'Recurrentes',
     new: 'Nueva regla',

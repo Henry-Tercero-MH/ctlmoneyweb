@@ -834,6 +834,57 @@ function deleteRecurringRule_(payload, user) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// GOALS — Metas de ahorro
+// ─────────────────────────────────────────────────────────────────────────────
+
+function listGoals_() {
+  return readAll_('goals');
+}
+
+function createGoal_(payload, user) {
+  if (!payload.id)   throw new ApiErr('VALIDATION_ERROR', 'Falta id.');
+  if (!payload.name) throw new ApiErr('VALIDATION_ERROR', 'Falta nombre.');
+  if (!Number.isFinite(Number(payload.target_minor)) || Number(payload.target_minor) <= 0) {
+    throw new ApiErr('VALIDATION_ERROR', 'Monto objetivo inválido.');
+  }
+  var row = {
+    id: payload.id,
+    name: String(payload.name).trim(),
+    target_minor: Math.round(Number(payload.target_minor)),
+    target_date: payload.target_date || '',
+    linked_account_id: payload.linked_account_id || '',
+    created_at: nowIso_(),
+  };
+  appendRow_('goals', row);
+  audit_('createGoal', 'goals', row.id, payload, user.email);
+  return row;
+}
+
+function updateGoal_(payload, user) {
+  if (!payload.id) throw new ApiErr('VALIDATION_ERROR', 'Falta id.');
+  var existing = readAll_('goals').filter(function(g) { return g.id === payload.id; })[0];
+  if (!existing) throw new ApiErr('NOT_FOUND', 'Meta no encontrada.');
+  var row = {
+    id: payload.id,
+    name: String(payload.name || existing.name).trim(),
+    target_minor: Math.round(Number(payload.target_minor) || existing.target_minor),
+    target_date: payload.target_date !== undefined ? payload.target_date : existing.target_date,
+    linked_account_id: payload.linked_account_id !== undefined
+      ? payload.linked_account_id : existing.linked_account_id,
+    created_at: existing.created_at || nowIso_(),
+  };
+  updateRow_('goals', payload.id, row);
+  audit_('updateGoal', 'goals', payload.id, payload, user.email);
+  return row;
+}
+
+function deleteGoal_(payload, user) {
+  var res = deleteRow_('goals', payload.id);
+  audit_('deleteGoal', 'goals', payload.id, payload, user.email);
+  return res;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // DRIVE — Subida de imágenes a Google Drive
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -985,6 +1036,10 @@ function dispatch_(action, payload, user, idem) {
     case 'deleteRecurringRule':     return deleteRecurringRule_(payload, user);
     case 'getAllSettings':           return getAllSettings_();
     case 'setSetting':              return setSetting_(payload, user);
+    case 'listGoals':               return listGoals_();
+    case 'createGoal':              return createGoal_(payload, user);
+    case 'updateGoal':              return updateGoal_(payload, user);
+    case 'deleteGoal':              return deleteGoal_(payload, user);
     case 'uploadReceipt':           return uploadReceipt_(payload, user);
     case 'uploadAvatar':            return uploadAvatar_(payload, user);
     default:

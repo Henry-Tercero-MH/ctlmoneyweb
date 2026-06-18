@@ -158,3 +158,24 @@ export interface CreateRecurringPayload {
 }
 
 export type UpdateRecurringPayload = CreateRecurringPayload & { active: boolean };
+
+// ── Fase 3: Metas de ahorro ──
+
+export interface GoalDTO {
+  id: string;
+  name: string;
+  target_minor: number;
+  target_date: string;
+  linked_account_id: string;
+  created_at: string;
+}
+
+export interface CreateGoalPayload {
+  id: string;
+  name: string;
+  target_minor: number;
+  target_date?: string;
+  linked_account_id?: string;
+}
+
+export type UpdateGoalPayload = CreateGoalPayload;

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuid } from 'uuid';
-import { Sun, Moon, ChevronRight, Plus, Trash2, Pencil, PiggyBank, RefreshCw } from 'lucide-react';
+import { Sun, Moon, ChevronRight, Plus, Trash2, Pencil, PiggyBank, RefreshCw, Target } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { useUiStore } from '@/stores/uiStore';
 import { useAccounts, useCreateAccount, useUpdateAccount, useArchiveAccount } from '@/hooks/useAccounts';
@@ -184,11 +184,19 @@ export default function MoreScreen() {
             </div>
             <ChevronRight size={16} strokeWidth={1.75} className={styles.rowChevron} />
           </div>
-          <div className={styles.listRow}
+          <div className={`${styles.listRow} ${styles.rowBorder}`}
             onClick={() => navigate('/recurrentes')} role="button" tabIndex={0}>
             <div className={styles.catRow}>
               <span className={styles.catIcon}><RefreshCw size={18} strokeWidth={1.75} /></span>
               <p className={styles.listRowName}>{t.recurring.title}</p>
+            </div>
+            <ChevronRight size={16} strokeWidth={1.75} className={styles.rowChevron} />
+          </div>
+          <div className={styles.listRow}
+            onClick={() => navigate('/metas')} role="button" tabIndex={0}>
+            <div className={styles.catRow}>
+              <span className={styles.catIcon}><Target size={18} strokeWidth={1.75} /></span>
+              <p className={styles.listRowName}>{t.goals.title}</p>
             </div>
             <ChevronRight size={16} strokeWidth={1.75} className={styles.rowChevron} />
           </div>

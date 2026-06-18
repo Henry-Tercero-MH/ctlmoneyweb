@@ -20,4 +20,5 @@ export const QK = {
   accountBalances: () => ['accountBalances'] as const,
   categories: () => ['categories'] as const,
   settings: () => ['settings'] as const,
+  goals: () => ['goals'] as const,
 } as const;
