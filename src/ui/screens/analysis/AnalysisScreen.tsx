@@ -1,8 +1,11 @@
 import { useState, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, TrendingDown, TrendingUp, Minus } from 'lucide-react';
-import { useTransactionSummary } from '@/hooks/useTransactions';
+import { ChevronLeft, ChevronRight, TrendingDown, TrendingUp, Minus, CreditCard, AlertTriangle, CalendarClock, CheckCircle2 } from 'lucide-react';
+import { useTransactionSummary, useTransactions } from '@/hooks/useTransactions';
 import { useCategories } from '@/hooks/useCategories';
+import { useCreditCardsStore } from '@/stores/creditCardsStore';
+import { computeCardCycle, type AlertLevel } from '@/core/creditCard';
 import { formatMoney, money } from '@/core/money';
+import { formatDayMonth, todayISO } from '@/core/dates';
 import { useUiStore } from '@/stores/uiStore';
 import { Skeleton } from '@/ui/components/Skeleton';
 import { Card } from '@/ui/components/Card';
@@ -17,6 +20,18 @@ const SEGMENT_COLORS = [
   '#c084fc', '#fb923c', '#34d399', '#f472b6',
   '#a78bfa', '#38bdf8',
 ];
+
+const LEVEL_COLOR: Record<AlertLevel, string> = {
+  ok: 'var(--color-income)',
+  soon: 'var(--color-warning)',
+  urgent: 'var(--color-expense)',
+};
+
+const LEVEL_ICON: Record<AlertLevel, typeof CheckCircle2> = {
+  ok: CheckCircle2,
+  soon: CalendarClock,
+  urgent: AlertTriangle,
+};
 
 function prevMonth(ym: string): string {
   const parts = ym.split('-');
@@ -104,6 +119,20 @@ export default function AnalysisScreen() {
   const { data: summary, isLoading } = useTransactionSummary(ym);
   const { data: categories = [] } = useCategories();
 
+  // ── Tarjetas de crédito (estado "actual", independiente del mes elegido) ──
+  const cards = useCreditCardsStore((s) => s.cards);
+  const { data: txThisM = [] } = useTransactions(currentYM);
+  const { data: txPrevM = [] } = useTransactions(prevMonth(currentYM));
+  const cardTx = useMemo(() => [...txThisM, ...txPrevM], [txThisM, txPrevM]);
+
+  function spentInCycle(accountId: string, cycleStart: string): number {
+    if (!accountId) return 0;
+    const today = todayISO();
+    return cardTx
+      .filter((t) => t.account_id === accountId && t.kind === 'expense' && t.date >= cycleStart && t.date <= today)
+      .reduce((sum, t) => sum + t.amount_minor, 0);
+  }
+
   // Mapa id→categoría
   const catMap = useMemo(() => {
     const m: Record<string, { name: string; icon: string; color: string }> = {};
@@ -187,6 +216,65 @@ export default function AnalysisScreen() {
                 <p className={styles.kpiLabel}>Neto</p>
               </Card>
             </div>
+
+            {/* ── Estado de tarjetas de crédito ── */}
+            {cards.length > 0 && (
+              <Card className={styles.ccCard}>
+                <p className={styles.sectionTitle}>
+                  <CreditCard size={15} strokeWidth={2} style={{ verticalAlign: '-2px', marginRight: 6 }} />
+                  Tarjetas de crédito
+                </p>
+                <div className={styles.ccList}>
+                  {cards.map((card) => {
+                    const cycle = computeCardCycle(card);
+                    const color = LEVEL_COLOR[cycle.level];
+                    const Icon = LEVEL_ICON[cycle.level];
+                    const spent = spentInCycle(card.linkedAccountId, cycle.cycleStart);
+                    const hasLimit = card.linkedAccountId && card.limitMinor > 0;
+                    const limitPct = hasLimit ? Math.min((spent / card.limitMinor) * 100, 100) : 0;
+
+                    return (
+                      <div key={card.id} className={styles.ccRow} style={{ borderLeftColor: color }}>
+                        <div className={styles.ccHead}>
+                          <div>
+                            <p className={styles.ccName}>{card.name}</p>
+                            <p className={styles.ccSub}>
+                              Pago: {formatDayMonth(cycle.nextPayment)} · corte día {card.cutoffDay}
+                            </p>
+                          </div>
+                          <span className={styles.ccBadge} style={{ color, borderColor: color }}>
+                            <Icon size={13} strokeWidth={2} />
+                            {cycle.daysUntilPayment === 0 ? 'Hoy' : `${cycle.daysUntilPayment}d`}
+                          </span>
+                        </div>
+
+                        {card.linkedAccountId ? (
+                          <>
+                            <div className={styles.ccSpentRow}>
+                              <span>Gastado este ciclo</span>
+                              <span className={styles.ccSpent}>
+                                {formatMoney(money(spent), currency)}
+                                {hasLimit && <> / {formatMoney(money(card.limitMinor), currency)}</>}
+                              </span>
+                            </div>
+                            {hasLimit && (
+                              <div className={styles.ccTrack}>
+                                <div
+                                  className={styles.ccFill}
+                                  style={{ width: `${limitPct}%`, background: limitPct >= 100 ? 'var(--color-expense)' : 'var(--color-primary)' }}
+                                />
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <p className={styles.ccHint}>Vincula una cuenta a la tarjeta para ver el gasto del ciclo.</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </Card>
+            )}
 
             {/* ── Donut + leyenda ── */}
             {slices.length === 0 ? (
