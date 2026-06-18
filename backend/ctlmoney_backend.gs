@@ -48,6 +48,10 @@ var SCHEMA = {
     'id', 'name', 'total_minor', 'installment_count', 'paid_count',
     'account_id', 'start_date', 'created_at',
   ],
+  credit_cards: [
+    'id', 'name', 'cutoff_day', 'payment_day', 'limit_minor',
+    'currency', 'linked_account_id', 'created_at',
+  ],
   settings: ['key', 'value'],
   audit_log: ['timestamp', 'action', 'entity', 'entity_id', 'payload_hash', 'user_email'],
   _idempotency: ['idempotency_id', 'created_at'],
@@ -283,6 +287,7 @@ var SEEDS = {
   goals:          function(ss) { seedGoals_(ss); },
   goal_contributions: function(ss) { seedGoalContributions_(ss); },
   installments:   function(ss) { seedInstallments_(ss); },
+  credit_cards:   function(ss) { seedCreditCards_(ss); },
 };
 
 /**
@@ -363,6 +368,7 @@ function seedRecurringRules_(ss) { /* sin datos iniciales */ }
 function seedGoals_(ss) { /* sin datos iniciales */ }
 function seedGoalContributions_(ss) { /* sin datos iniciales */ }
 function seedInstallments_(ss) { /* sin datos iniciales */ }
+function seedCreditCards_(ss) { /* sin datos iniciales */ }
 
 function writeHeaders_(sheet, headers) {
   var range = sheet.getRange(1, 1, 1, headers.length);
@@ -1014,6 +1020,57 @@ function deleteInstallment_(payload, user) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// CREDIT CARDS — Tarjetas de crédito (fechas de corte/pago, límite)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function clampDay_(v) {
+  var n = Math.round(Number(v));
+  if (!Number.isFinite(n)) n = 1;
+  return Math.min(Math.max(n, 1), 31);
+}
+
+function listCreditCards_() {
+  return readAll_('credit_cards');
+}
+
+function buildCreditCard_(payload, createdAt) {
+  return {
+    id: payload.id,
+    name: String(payload.name).trim(),
+    cutoff_day: clampDay_(payload.cutoff_day),
+    payment_day: clampDay_(payload.payment_day),
+    limit_minor: Math.round(Number(payload.limit_minor) || 0),
+    currency: payload.currency || 'GTQ',
+    linked_account_id: payload.linked_account_id || '',
+    created_at: createdAt,
+  };
+}
+
+function createCreditCard_(payload, user) {
+  if (!payload.id || !payload.name) throw new ApiErr('VALIDATION_ERROR', 'Faltan datos de la tarjeta.');
+  var row = buildCreditCard_(payload, nowIso_());
+  appendRow_('credit_cards', row);
+  audit_('createCreditCard', 'credit_cards', row.id, payload, user.email);
+  return row;
+}
+
+function updateCreditCard_(payload, user) {
+  if (!payload.id) throw new ApiErr('VALIDATION_ERROR', 'Falta id.');
+  var existing = readAll_('credit_cards').filter(function (c) { return c.id === payload.id; })[0];
+  if (!existing) throw new ApiErr('NOT_FOUND', 'Tarjeta no encontrada.');
+  var row = buildCreditCard_(payload, existing.created_at || nowIso_());
+  updateRow_('credit_cards', payload.id, row);
+  audit_('updateCreditCard', 'credit_cards', payload.id, payload, user.email);
+  return row;
+}
+
+function deleteCreditCard_(payload, user) {
+  var res = deleteRow_('credit_cards', payload.id);
+  audit_('deleteCreditCard', 'credit_cards', payload.id, payload, user.email);
+  return res;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // EXPORT — Volcado completo de datos
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -1319,6 +1376,10 @@ function dispatch_(action, payload, user, idem) {
     case 'createInstallment':       return createInstallment_(payload, user);
     case 'updateInstallment':       return updateInstallment_(payload, user);
     case 'deleteInstallment':       return deleteInstallment_(payload, user);
+    case 'listCreditCards':         return listCreditCards_();
+    case 'createCreditCard':        return createCreditCard_(payload, user);
+    case 'updateCreditCard':        return updateCreditCard_(payload, user);
+    case 'deleteCreditCard':        return deleteCreditCard_(payload, user);
     case 'exportData':              return exportData_(payload);
     case 'uploadReceipt':           return uploadReceipt_(payload, user);
     case 'uploadAvatar':            return uploadAvatar_(payload, user);

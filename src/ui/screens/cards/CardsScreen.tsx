@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { v4 as uuid } from 'uuid';
 import { differenceInCalendarDays } from 'date-fns';
 import { Plus, Pencil, Trash2, CalendarClock, AlertTriangle, CheckCircle2 } from 'lucide-react';
-import { useCreditCardsStore } from '@/stores/creditCardsStore';
+import { useCreditCards, useUpsertCreditCard, useDeleteCreditCard } from '@/hooks/useCreditCards';
 import { useUiStore } from '@/stores/uiStore';
 import { useAccounts } from '@/hooks/useAccounts';
 import { useTransactions } from '@/hooks/useTransactions';
@@ -44,9 +44,9 @@ const LEVEL_LABEL: Record<AlertLevel, string> = {
 
 export default function CardsScreen() {
   const activeCurrency = useUiStore((s) => s.activeCurrency) as CurrencyCode;
-  const cards = useCreditCardsStore((s) => s.cards);
-  const upsert = useCreditCardsStore((s) => s.upsert);
-  const remove = useCreditCardsStore((s) => s.remove);
+  const { data: cards = [] } = useCreditCards();
+  const upsertCard = useUpsertCreditCard();
+  const deleteCard = useDeleteCreditCard();
   const { data: accounts = [] } = useAccounts();
 
   // Transacciones del ciclo pueden caer en este mes o el anterior (corte a mitad de mes).
@@ -100,21 +100,24 @@ export default function CardsScreen() {
 
   function handleSave() {
     if (!form.name.trim()) return;
-    upsert({
-      id: form.id || uuid(),
-      name: form.name.trim(),
-      cutoffDay: clampDay(form.cutoffDay),
-      paymentDay: clampDay(form.paymentDay),
-      limitMinor: form.limit ? Math.round(parseFloat(form.limit.replace(',', '.')) * 100) || 0 : 0,
-      currency: activeCurrency,
-      linkedAccountId: form.linkedAccountId,
+    upsertCard.mutate({
+      card: {
+        id: form.id || uuid(),
+        name: form.name.trim(),
+        cutoffDay: clampDay(form.cutoffDay),
+        paymentDay: clampDay(form.paymentDay),
+        limitMinor: form.limit ? Math.round(parseFloat(form.limit.replace(',', '.')) * 100) || 0 : 0,
+        currency: activeCurrency,
+        linkedAccountId: form.linkedAccountId,
+      },
+      isEdit: isEditing,
     });
     setSheet(false);
   }
 
   function handleDelete(id: string) {
     setConfirmId(null);
-    remove(id);
+    deleteCard.mutate(id);
   }
 
   return (

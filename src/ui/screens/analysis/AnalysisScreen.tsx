@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, TrendingDown, TrendingUp, Minus, CreditCard, AlertTriangle, CalendarClock, CheckCircle2 } from 'lucide-react';
 import { useTransactionSummary, useTransactions } from '@/hooks/useTransactions';
 import { useCategories } from '@/hooks/useCategories';
-import { useCreditCardsStore } from '@/stores/creditCardsStore';
+import { useCreditCards } from '@/hooks/useCreditCards';
 import { computeCardCycle, type AlertLevel } from '@/core/creditCard';
 import { formatMoney, money } from '@/core/money';
 import { formatDayMonth, todayISO } from '@/core/dates';
@@ -120,7 +120,7 @@ export default function AnalysisScreen() {
   const { data: categories = [] } = useCategories();
 
   // ── Tarjetas de crédito (estado "actual", independiente del mes elegido) ──
-  const cards = useCreditCardsStore((s) => s.cards);
+  const { data: cards = [] } = useCreditCards();
   const { data: txThisM = [] } = useTransactions(currentYM);
   const { data: txPrevM = [] } = useTransactions(prevMonth(currentYM));
   const cardTx = useMemo(() => [...txThisM, ...txPrevM], [txThisM, txPrevM]);

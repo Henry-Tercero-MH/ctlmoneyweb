@@ -222,3 +222,26 @@ export interface CreateInstallmentPayload {
 export interface UpdateInstallmentPayload extends CreateInstallmentPayload {
   paid_count: number;
 }
+
+// ── Tarjetas de crédito ──
+
+export interface CreditCardDTO {
+  id: string;
+  name: string;
+  cutoff_day: number;
+  payment_day: number;
+  limit_minor: number;
+  currency: string;
+  linked_account_id: string;
+  created_at: string;
+}
+
+export interface UpsertCreditCardPayload {
+  id: string;
+  name: string;
+  cutoff_day: number;
+  payment_day: number;
+  limit_minor: number;
+  currency: string;
+  linked_account_id: string;
+}

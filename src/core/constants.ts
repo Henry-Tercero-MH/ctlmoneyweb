@@ -23,4 +23,5 @@ export const QK = {
   goals: () => ['goals'] as const,
   goalContributions: () => ['goalContributions'] as const,
   installments: () => ['installments'] as const,
+  creditCards: () => ['creditCards'] as const,
 } as const;

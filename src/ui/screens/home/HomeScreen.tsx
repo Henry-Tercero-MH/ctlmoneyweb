@@ -1,9 +1,11 @@
 import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, ResponsiveContainer, Cell } from 'recharts';
-import { ArrowUpRight, ArrowDownRight, ChevronRight } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, ChevronRight, CreditCard, AlertTriangle, CalendarClock, CheckCircle2 } from 'lucide-react';
 import { useTransactions, useTransactionSummary } from '@/hooks/useTransactions';
 import { useUiStore } from '@/stores/uiStore';
 import { useAuthStore } from '@/stores/authStore';
+import { useCreditCards } from '@/hooks/useCreditCards';
+import { computeCardCycle, type AlertLevel } from '@/core/creditCard';
 import { currentYearMonth, formatMonthLabel, formatDayMonth } from '@/core/dates';
 import { formatMoney, money } from '@/core/money';
 import { Card } from '@/ui/components/Card';
@@ -15,6 +17,18 @@ import { t } from '@/i18n/es';
 import type { CurrencyCode } from '@/core/money';
 import styles from './HomeScreen.module.css';
 
+const LEVEL_COLOR: Record<AlertLevel, string> = {
+  ok: 'var(--color-income)',
+  soon: 'var(--color-warning)',
+  urgent: 'var(--color-expense)',
+};
+
+const LEVEL_ICON: Record<AlertLevel, typeof CheckCircle2> = {
+  ok: CheckCircle2,
+  soon: CalendarClock,
+  urgent: AlertTriangle,
+};
+
 export default function HomeScreen() {
   const yearMonth = currentYearMonth();
   const currency = useUiStore((s) => s.activeCurrency) as CurrencyCode;
@@ -22,8 +36,15 @@ export default function HomeScreen() {
   const profile = useAuthStore((s) => s.profile);
   const navigate = useNavigate();
 
+  const { data: cards = [] } = useCreditCards();
+
   const { data: summary, isLoading: loadingSummary } = useTransactionSummary(yearMonth);
   const { data: transactions, isLoading: loadingTx } = useTransactions(yearMonth);
+
+  // Tarjetas ordenadas por cercanía del pago
+  const cardStatus = [...cards]
+    .map((card) => ({ card, cycle: computeCardCycle(card) }))
+    .sort((a, b) => a.cycle.daysUntilPayment - b.cycle.daysUntilPayment);
 
   const recent = transactions?.slice(0, 5) ?? [];
   const netMinor = summary?.net_minor ?? 0;
@@ -84,6 +105,46 @@ export default function HomeScreen() {
           </Card>
         )}
       </section>
+
+      {/* ── Estado de tarjetas ── */}
+      {cardStatus.length > 0 && (
+        <section className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.sectionTitle}>Tarjetas</h2>
+            <button className={styles.seeAllBtn} onClick={() => navigate('/tarjetas')} type="button">
+              {t.home.seeAll}
+              <ChevronRight size={14} strokeWidth={2} />
+            </button>
+          </div>
+          <Card className={styles.txList}>
+            {cardStatus.map(({ card, cycle }, i) => {
+              const color = LEVEL_COLOR[cycle.level];
+              const Icon = LEVEL_ICON[cycle.level];
+              return (
+                <div
+                  key={card.id}
+                  className={`${styles.txRow} ${i < cardStatus.length - 1 ? styles.txBorder : ''}`}
+                  onClick={() => navigate('/tarjetas')}
+                  role="button"
+                  tabIndex={0}
+                >
+                  <div className={styles.txInfo}>
+                    <span className={styles.txNote}>
+                      <CreditCard size={13} strokeWidth={2} style={{ verticalAlign: '-2px', marginRight: 5 }} />
+                      {card.name}
+                    </span>
+                    <span className={styles.txDate}>Pago {formatDayMonth(cycle.nextPayment)}</span>
+                  </div>
+                  <span className={styles.ccBadge} style={{ color, borderColor: color }}>
+                    <Icon size={13} strokeWidth={2} />
+                    {cycle.daysUntilPayment === 0 ? 'Hoy' : `${cycle.daysUntilPayment}d`}
+                  </span>
+                </div>
+              );
+            })}
+          </Card>
+        </section>
+      )}
 
       {/* ── Gráfica de gasto diario ── */}
       {!loadingSummary && dailyData.length > 0 && (
