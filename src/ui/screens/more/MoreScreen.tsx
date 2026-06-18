@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Sun, Moon, ChevronRight } from 'lucide-react';
+import { Sun, Moon, ChevronRight, PiggyBank, RefreshCw } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { useUiStore } from '@/stores/uiStore';
 import { useAccounts } from '@/hooks/useAccounts';
@@ -114,6 +114,34 @@ export default function MoreScreen() {
             ))}
           </div>
         </div>
+
+        {/* Fase 2 — accesos directos */}
+        <Card className={styles.listCard}>
+          <div
+            className={`${styles.listRow} ${styles.rowBorder}`}
+            onClick={() => navigate('/presupuestos')}
+            role="button"
+            tabIndex={0}
+          >
+            <div className={styles.catRow}>
+              <span className={styles.catIcon}><PiggyBank size={18} strokeWidth={1.75} /></span>
+              <p className={styles.listRowName}>{t.budgets.title}</p>
+            </div>
+            <ChevronRight size={16} strokeWidth={1.75} className={styles.rowChevron} />
+          </div>
+          <div
+            className={styles.listRow}
+            onClick={() => navigate('/recurrentes')}
+            role="button"
+            tabIndex={0}
+          >
+            <div className={styles.catRow}>
+              <span className={styles.catIcon}><RefreshCw size={18} strokeWidth={1.75} /></span>
+              <p className={styles.listRowName}>{t.recurring.title}</p>
+            </div>
+            <ChevronRight size={16} strokeWidth={1.75} className={styles.rowChevron} />
+          </div>
+        </Card>
 
         {/* Cuentas */}
         <div className={styles.listBlock}>

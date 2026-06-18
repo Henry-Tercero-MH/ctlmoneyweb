@@ -1,0 +1,296 @@
+.screen {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-4) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg);
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.title {
+  font-size: var(--text-title);
+  font-weight: 800;
+  color: var(--color-text-primary);
+  letter-spacing: -0.5px;
+}
+
+.addBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  box-shadow: var(--shadow-primary);
+  flex-shrink: 0;
+}
+
+.body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: var(--space-4) var(--space-4) calc(var(--space-12) + var(--safe-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.skeletonList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* ── Rule card ── */
+.ruleCard {
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  transition: opacity var(--transition-fast);
+}
+
+.ruleInactive {
+  opacity: 0.5;
+}
+
+.ruleTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.ruleMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.catIcon {
+  font-size: 22px;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface-2);
+  border-radius: var(--radius-input);
+  flex-shrink: 0;
+}
+
+.catName {
+  font-size: var(--text-label);
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.ruleDetail {
+  font-size: var(--text-caption);
+  color: var(--color-text-secondary);
+  margin-top: 1px;
+}
+
+.ruleRight {
+  flex-shrink: 0;
+}
+
+.amount {
+  font-size: var(--text-label);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.income { color: var(--color-income); }
+.expense { color: var(--color-expense); }
+
+.ruleBottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nextRun {
+  font-size: var(--text-caption);
+  color: var(--color-text-disabled);
+}
+
+.ruleActions {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.actionBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-input);
+  color: var(--color-text-secondary);
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.actionBtn:active {
+  color: var(--color-primary);
+  background: var(--color-primary-glow);
+}
+
+.deleteAction:active {
+  color: var(--color-expense);
+  background: color-mix(in srgb, var(--color-expense) 12%, transparent);
+}
+
+/* ── Formulario ── */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding-bottom: var(--safe-bottom);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  flex: 1;
+}
+
+.fieldRow {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.fieldLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.select,
+.input {
+  height: 46px;
+  padding: 0 var(--space-3);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-input);
+  background: var(--color-surface-2);
+  color: var(--color-text-primary);
+  font-size: var(--text-label);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  appearance: auto;
+  width: 100%;
+}
+
+.select:focus,
+.input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-glow);
+}
+
+/* ── Kind selector ── */
+.kindRow {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.kindBtn {
+  flex: 1;
+  height: 44px;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface-2);
+  font-size: var(--text-label);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.kindActive {
+  border-color: var(--color-expense);
+  background: color-mix(in srgb, var(--color-expense) 12%, var(--color-surface));
+  color: var(--color-expense);
+}
+
+.kindActive.kindIncome {
+  border-color: var(--color-income);
+  background: color-mix(in srgb, var(--color-income) 12%, var(--color-surface));
+  color: var(--color-income);
+}
+
+/* ── Frecuencia grid ── */
+.freqGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.freqBtn {
+  padding: 8px 14px;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface-2);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.freqActive {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 15%, var(--color-surface));
+  color: var(--color-primary);
+}
+
+/* ── Confirmar borrado ── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 50;
+  display: flex;
+  align-items: flex-end;
+}
+
+.confirmSheet {
+  width: 100%;
+  background: var(--color-surface);
+  border-radius: 20px 20px 0 0;
+  border-top: 1px solid var(--color-border);
+  padding: var(--space-6) var(--space-4);
+  padding-bottom: max(var(--safe-bottom), var(--space-6));
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.confirmText {
+  font-size: var(--text-body);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  text-align: center;
+}
+
+.confirmActions {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.confirmActions > * { flex: 1; }

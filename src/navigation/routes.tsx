@@ -9,6 +9,8 @@ const OnboardingScreen = lazy(() => import('@/ui/screens/auth/OnboardingScreen')
 const HomeScreen = lazy(() => import('@/ui/screens/home/HomeScreen'));
 const MovementsScreen = lazy(() => import('@/ui/screens/movements/MovementsScreen'));
 const MoreScreen = lazy(() => import('@/ui/screens/more/MoreScreen'));
+const BudgetsScreen = lazy(() => import('@/ui/screens/budgets/BudgetsScreen'));
+const RecurringScreen = lazy(() => import('@/ui/screens/recurring/RecurringScreen'));
 
 function PageFallback() {
   return (
@@ -62,6 +64,8 @@ export function AppRoutes() {
         >
           <Route index element={<HomeScreen />} />
           <Route path="movimientos" element={<MovementsScreen />} />
+          <Route path="presupuestos" element={<BudgetsScreen />} />
+          <Route path="recurrentes" element={<RecurringScreen />} />
           <Route path="mas" element={<MoreScreen />} />
         </Route>
 

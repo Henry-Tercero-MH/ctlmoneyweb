@@ -696,6 +696,118 @@ function setSetting_(payload, user) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// BUDGETS — CRUD de presupuestos por categoría
+// ─────────────────────────────────────────────────────────────────────────────
+
+function listBudgets_() {
+  return readAll_('budgets').filter(function (b) {
+    return b.active !== false && b.active !== 'FALSE';
+  });
+}
+
+function createBudget_(payload, user) {
+  if (!payload.id || !payload.category_id) throw new ApiErr('VALIDATION_ERROR', 'Datos de presupuesto incompletos.');
+  if (!Number.isFinite(Number(payload.limit_minor)) || Number(payload.limit_minor) <= 0) {
+    throw new ApiErr('VALIDATION_ERROR', 'Límite inválido.');
+  }
+  var row = {
+    id: payload.id,
+    category_id: payload.category_id,
+    period: payload.period || 'monthly',
+    limit_minor: Math.round(Number(payload.limit_minor)),
+    start_month: payload.start_month || nowIso_().slice(0, 7),
+    active: true,
+  };
+  appendRow_('budgets', row);
+  audit_('createBudget', 'budgets', row.id, payload, user.email);
+  return row;
+}
+
+function updateBudget_(payload, user) {
+  var existing = readAll_('budgets').filter(function (b) { return b.id === payload.id; })[0];
+  if (!existing) throw new ApiErr('NOT_FOUND', 'Presupuesto no encontrado.');
+  var row = {
+    id: payload.id,
+    category_id: payload.category_id || existing.category_id,
+    period: payload.period || existing.period,
+    limit_minor: Math.round(Number(payload.limit_minor) || existing.limit_minor),
+    start_month: payload.start_month || existing.start_month,
+    active: payload.active !== undefined ? payload.active : existing.active,
+  };
+  updateRow_('budgets', payload.id, row);
+  audit_('updateBudget', 'budgets', payload.id, payload, user.email);
+  return row;
+}
+
+function deleteBudget_(payload, user) {
+  var res = deleteRow_('budgets', payload.id);
+  audit_('deleteBudget', 'budgets', payload.id, payload, user.email);
+  return res;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RECURRING RULES — CRUD de reglas de transacciones recurrentes
+// ─────────────────────────────────────────────────────────────────────────────
+
+function listRecurringRules_() {
+  return readAll_('recurring_rules');
+}
+
+function createRecurringRule_(payload, user) {
+  if (!payload.id || !payload.account_id || !payload.category_id) {
+    throw new ApiErr('VALIDATION_ERROR', 'Datos de regla recurrente incompletos.');
+  }
+  if (!Number.isFinite(Number(payload.amount_minor)) || Number(payload.amount_minor) <= 0) {
+    throw new ApiErr('VALIDATION_ERROR', 'Monto inválido.');
+  }
+  var validFreqs = ['daily', 'weekly', 'biweekly', 'monthly', 'yearly'];
+  if (validFreqs.indexOf(payload.frequency) === -1) {
+    throw new ApiErr('VALIDATION_ERROR', 'Frecuencia inválida: ' + payload.frequency);
+  }
+  var row = {
+    id: payload.id,
+    account_id: payload.account_id,
+    category_id: payload.category_id,
+    kind: payload.kind || 'expense',
+    amount_minor: Math.round(Number(payload.amount_minor)),
+    note: payload.note || '',
+    frequency: payload.frequency,
+    next_run_date: payload.next_run_date || nowIso_().slice(0, 10),
+    end_date: payload.end_date || '',
+    active: true,
+  };
+  appendRow_('recurring_rules', row);
+  audit_('createRecurringRule', 'recurring_rules', row.id, payload, user.email);
+  return row;
+}
+
+function updateRecurringRule_(payload, user) {
+  var existing = readAll_('recurring_rules').filter(function (r) { return r.id === payload.id; })[0];
+  if (!existing) throw new ApiErr('NOT_FOUND', 'Regla recurrente no encontrada.');
+  var row = {
+    id: payload.id,
+    account_id: payload.account_id || existing.account_id,
+    category_id: payload.category_id || existing.category_id,
+    kind: payload.kind || existing.kind,
+    amount_minor: Math.round(Number(payload.amount_minor) || existing.amount_minor),
+    note: payload.note !== undefined ? payload.note : existing.note,
+    frequency: payload.frequency || existing.frequency,
+    next_run_date: payload.next_run_date || existing.next_run_date,
+    end_date: payload.end_date !== undefined ? payload.end_date : existing.end_date,
+    active: payload.active !== undefined ? payload.active : existing.active,
+  };
+  updateRow_('recurring_rules', payload.id, row);
+  audit_('updateRecurringRule', 'recurring_rules', payload.id, payload, user.email);
+  return row;
+}
+
+function deleteRecurringRule_(payload, user) {
+  var res = deleteRow_('recurring_rules', payload.id);
+  audit_('deleteRecurringRule', 'recurring_rules', payload.id, payload, user.email);
+  return res;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // DRIVE — Subida de imágenes a Google Drive
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -837,6 +949,14 @@ function dispatch_(action, payload, user, idem) {
     case 'createCategory':          return createCategory_(payload, user, idem);
     case 'updateCategory':          return updateCategory_(payload, user, idem);
     case 'deleteCategory':          return deleteCategory_(payload, user, idem);
+    case 'listBudgets':             return listBudgets_();
+    case 'createBudget':            return createBudget_(payload, user);
+    case 'updateBudget':            return updateBudget_(payload, user);
+    case 'deleteBudget':            return deleteBudget_(payload, user);
+    case 'listRecurringRules':      return listRecurringRules_();
+    case 'createRecurringRule':     return createRecurringRule_(payload, user);
+    case 'updateRecurringRule':     return updateRecurringRule_(payload, user);
+    case 'deleteRecurringRule':     return deleteRecurringRule_(payload, user);
     case 'getAllSettings':           return getAllSettings_();
     case 'setSetting':              return setSetting_(payload, user);
     case 'uploadReceipt':           return uploadReceipt_(payload, user);

@@ -102,3 +102,59 @@ export interface ListTransactionsPayload {
   categoryId?: string;
   search?: string;
 }
+
+// ── Fase 2: Presupuestos ──
+
+export type BudgetPeriod = 'monthly' | 'weekly';
+
+export interface BudgetDTO {
+  id: string;
+  category_id: string;
+  period: BudgetPeriod;
+  limit_minor: number;
+  start_month: string; // YYYY-MM
+  active: boolean;
+}
+
+export interface CreateBudgetPayload {
+  id: string;
+  category_id: string;
+  period: BudgetPeriod;
+  limit_minor: number;
+  start_month: string;
+}
+
+export interface UpdateBudgetPayload extends CreateBudgetPayload {
+  active: boolean;
+}
+
+// ── Fase 2: Reglas recurrentes ──
+
+export type RecurringFrequency = 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'yearly';
+
+export interface RecurringRuleDTO {
+  id: string;
+  account_id: string;
+  category_id: string;
+  kind: TransactionKind;
+  amount_minor: number;
+  note: string;
+  frequency: RecurringFrequency;
+  next_run_date: string; // YYYY-MM-DD
+  end_date: string;      // YYYY-MM-DD o ''
+  active: boolean;
+}
+
+export interface CreateRecurringPayload {
+  id: string;
+  account_id: string;
+  category_id: string;
+  kind: TransactionKind;
+  amount_minor: number;
+  note: string;
+  frequency: RecurringFrequency;
+  next_run_date: string;
+  end_date?: string;
+}
+
+export type UpdateRecurringPayload = CreateRecurringPayload & { active: boolean };
