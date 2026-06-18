@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { Search, Trash2, Pencil, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTransactions, useDeleteTransaction } from '@/hooks/useTransactions';
 import { useUiStore } from '@/stores/uiStore';
@@ -196,21 +197,29 @@ export default function MovementsScreen() {
       </div>
 
       {/* ── Confirm delete ── */}
-      {confirmDelete && (
-        <div className={styles.overlay} role="dialog" aria-modal="true" aria-label={t.movements.deleteConfirm}>
-          <div className={styles.confirmSheet}>
-            <p className={styles.confirmText}>{t.movements.deleteConfirm}</p>
-            <div className={styles.confirmActions}>
-              <Button variant="secondary" onClick={() => setConfirmDelete(null)}>
-                {t.movements.cancel}
-              </Button>
-              <Button variant="danger" onClick={() => handleDelete(confirmDelete)}>
-                {t.movements.delete}
-              </Button>
+      {confirmDelete &&
+        createPortal(
+          <div
+            className={styles.overlay}
+            role="dialog"
+            aria-modal="true"
+            aria-label={t.movements.deleteConfirm}
+            onClick={() => setConfirmDelete(null)}
+          >
+            <div className={styles.confirmSheet} onClick={(e) => e.stopPropagation()}>
+              <p className={styles.confirmText}>{t.movements.deleteConfirm}</p>
+              <div className={styles.confirmActions}>
+                <Button variant="secondary" onClick={() => setConfirmDelete(null)}>
+                  {t.movements.cancel}
+                </Button>
+                <Button variant="danger" onClick={() => handleDelete(confirmDelete)}>
+                  {t.movements.delete}
+                </Button>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
