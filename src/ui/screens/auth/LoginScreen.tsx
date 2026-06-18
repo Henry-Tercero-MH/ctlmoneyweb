@@ -49,11 +49,15 @@ function GoogleLoginButton() {
           email: string; name: string; picture: string;
         };
 
-        setSession(tokenResponse.access_token, {
-          email: profile.email,
-          name: profile.name,
-          picture: profile.picture,
-        });
+        setSession(
+          tokenResponse.access_token,
+          {
+            email: profile.email,
+            name: profile.name,
+            picture: profile.picture,
+          },
+          tokenResponse.expires_in,
+        );
 
         setRefreshHandler(async () => {
           useAuthStore.getState().signOut();

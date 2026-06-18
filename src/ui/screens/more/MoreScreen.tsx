@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { v4 as uuid } from 'uuid';
 import { Sun, Moon, ChevronRight, Plus, Trash2, Pencil, PiggyBank, RefreshCw, Target, Download, FileJson, FileText, MonitorDown, CreditCard, Calculator } from 'lucide-react';
 import { usePwaInstall } from '@/hooks/usePwaInstall';
+import { usePwaUpdate } from '@/hooks/usePwaUpdate';
 import { exportApi } from '@/api/endpoints/export';
 import { CategoryIcon, ICON_OPTIONS } from '@/ui/components/CategoryIcon';
 import { useAuthStore } from '@/stores/authStore';
@@ -44,6 +45,7 @@ const BLANK_CATEGORY: CategoryForm = { id: '', name: '', kind: 'expense', icon: 
 
 export default function MoreScreen() {
   const { canInstall, isInstalled, install } = usePwaInstall();
+  const { checking, syncNow } = usePwaUpdate();
   const signOut = useAuthStore((s) => s.signOut);
   const profile = useAuthStore((s) => s.profile);
   const theme = useUiStore((s) => s.theme);
@@ -446,7 +448,17 @@ export default function MoreScreen() {
           </Card>
         </div>
 
-        {/* ── Instalar app ── */}
+        {/* ── App: actualizar / instalar ── */}
+        <button
+          type="button"
+          className={styles.installBtn}
+          onClick={syncNow}
+          disabled={checking}
+        >
+          <RefreshCw size={18} strokeWidth={1.75} className={checking ? styles.spinning : undefined} />
+          {checking ? 'Buscando actualización…' : 'Buscar actualizaciones'}
+        </button>
+
         {(canInstall || isInstalled) && (
           <button
             type="button"

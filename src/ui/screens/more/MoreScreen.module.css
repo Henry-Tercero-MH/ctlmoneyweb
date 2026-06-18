@@ -236,6 +236,16 @@
   cursor: default;
 }
 
+.spinning {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* ── Cerrar sesión ── */
 .signOutBtn {
   padding: var(--space-3) var(--space-4);
