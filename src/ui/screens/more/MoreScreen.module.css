@@ -228,3 +228,247 @@
   background: color-mix(in srgb, var(--color-expense) 10%, transparent);
   border-color: var(--color-expense);
 }
+
+/* ── Add icon button (next to section titles) ── */
+.addIconBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+.addIconBtn:active {
+  opacity: 0.8;
+  transform: scale(0.92);
+}
+
+/* ── Row actions ── */
+.rowActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.rowActionBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-input);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.rowActionBtn:active {
+  background: var(--color-primary-glow);
+  color: var(--color-primary);
+}
+
+.rowDeleteBtn {
+  color: var(--color-expense);
+  border-color: color-mix(in srgb, var(--color-expense) 30%, var(--color-border));
+}
+
+.rowDeleteBtn:active {
+  background: color-mix(in srgb, var(--color-expense) 15%, transparent);
+  color: var(--color-expense);
+}
+
+/* ── Forms inside BottomSheet ── */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding-bottom: var(--space-4);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.fieldRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.fieldLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.input {
+  background: var(--color-surface-2);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-input);
+  padding: var(--space-3) var(--space-3);
+  font-size: var(--text-body);
+  color: var(--color-text-primary);
+  min-height: 44px;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color var(--transition-fast);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.select {
+  background: var(--color-surface-2);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-input);
+  padding: var(--space-3) var(--space-3);
+  font-size: var(--text-body);
+  color: var(--color-text-primary);
+  min-height: 44px;
+  width: 100%;
+  appearance: none;
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+}
+
+.select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+/* ── Account type grid ── */
+.typeGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-2);
+}
+
+.typeBtn {
+  padding: var(--space-2) var(--space-2);
+  border-radius: var(--radius-input);
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface-2);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  min-height: 40px;
+  transition: all var(--transition-fast);
+}
+
+.typeBtn.typeActive {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface));
+}
+
+/* ── Category kind row ── */
+.kindRow {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.kindBtn {
+  flex: 1;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-input);
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface-2);
+  font-size: var(--text-caption);
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  min-height: 40px;
+  transition: all var(--transition-fast);
+}
+
+.kindBtn.kindActive {
+  border-color: var(--color-expense);
+  color: var(--color-expense);
+  background: color-mix(in srgb, var(--color-expense) 12%, var(--color-surface));
+}
+
+.kindBtn.kindActive.kindIncome {
+  border-color: var(--color-income);
+  color: var(--color-income);
+  background: color-mix(in srgb, var(--color-income) 12%, var(--color-surface));
+}
+
+/* ── Emoji icon picker ── */
+.iconGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--space-1);
+}
+
+.iconBtn {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--radius-input);
+  border: 1.5px solid transparent;
+  background: var(--color-surface-2);
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.iconBtn.iconActive {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 15%, var(--color-surface));
+  box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+/* ── Confirm overlay ── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+}
+
+.confirmSheet {
+  width: 100%;
+  background: var(--color-surface);
+  border-radius: 20px 20px 0 0;
+  padding: var(--space-6) var(--space-4) calc(var(--space-6) + var(--safe-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.confirmText {
+  font-size: var(--text-body);
+  color: var(--color-text-primary);
+  font-weight: 500;
+  text-align: center;
+}
+
+.confirmActions {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.confirmActions > * {
+  flex: 1;
+}
