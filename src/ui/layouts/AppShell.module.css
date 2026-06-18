@@ -22,12 +22,11 @@
   justify-content: space-around;
   background: var(--color-surface);
   border-top: 1px solid var(--color-border);
-  /* La barra llega hasta el borde inferior de la pantalla. El área del home
-     indicator forma parte de la barra (mismo fondo) y los iconos se centran
-     dentro de toda la altura, así no queda una banda vacía abajo. */
-  min-height: calc(58px + var(--safe-bottom));
+  /* La barra ocupa hasta el borde inferior, sin reservar espacio para el
+     home indicator: contenido al ras. */
+  min-height: 58px;
   padding-top: 6px;
-  padding-bottom: calc(var(--safe-bottom) / 2);
+  padding-bottom: 6px;
   position: relative;
   z-index: 20;
   flex-shrink: 0;
