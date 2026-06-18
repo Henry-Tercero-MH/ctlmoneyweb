@@ -1,0 +1,395 @@
+.screen {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.title {
+  font-size: var(--text-title);
+  font-weight: 800;
+  color: var(--color-text-primary);
+  letter-spacing: -0.5px;
+}
+
+.headerActions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.iconBtn {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-input);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4) var(--space-4) calc(var(--space-8) + var(--safe-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+/* ── Modo ── */
+.modeRow {
+  display: flex;
+  gap: var(--space-2);
+  width: 100%;
+  max-width: 440px;
+}
+
+.modeBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 42px;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-2);
+  border: 1.5px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: var(--text-label);
+  font-weight: 700;
+}
+
+.modeActive {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-on-primary);
+  box-shadow: var(--shadow-primary);
+}
+
+/* ── Turno ── */
+.turnBar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  max-width: 440px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  font-size: var(--text-label);
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.turnCheck {
+  border-color: var(--color-expense);
+  color: var(--color-expense);
+  animation: pulse 0.9s ease-in-out infinite;
+}
+
+.turnDot {
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--color-border);
+}
+
+.dotWhite { background: #fff; }
+.dotBlack { background: #1a1a2e; }
+
+/* ── Tablero ── */
+.boardWrap {
+  width: 100%;
+  max-width: 440px;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(155, 95, 255, 0.35), 0 2px 8px rgba(0, 0, 0, 0.4);
+  border: 3px solid #2a2350;
+}
+
+.cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.light { background: linear-gradient(135deg, #f5c800, #d4a800); }
+.dark { background: linear-gradient(135deg, #1a1a1a, #0a0a0a); }
+
+.selected {
+  box-shadow: inset 0 0 0 4px #ffd166;
+}
+
+.lastMove::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 209, 102, 0.32);
+}
+
+.check {
+  background: radial-gradient(circle, #ff6b6b, #c0392b) !important;
+  animation: pulse 0.8s ease-in-out infinite;
+}
+
+/* Pieza envuelta como dulce */
+.piece {
+  position: relative;
+  z-index: 2;
+  width: 88%;
+  height: 88%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+/* Envoltorio de vidrio templado sobre la casilla de la pieza */
+.glass {
+  position: absolute;
+  inset: 6%;
+  z-index: 0;
+  border-radius: 24%;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.7),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.22),
+    0 2px 6px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(2.5px) saturate(120%);
+  -webkit-backdrop-filter: blur(2.5px) saturate(120%);
+  overflow: hidden;
+}
+
+/* Reflejo/brillo del vidrio */
+.glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(150deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0) 42%);
+}
+
+.glassWhite {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.32), rgba(255, 255, 255, 0.08));
+}
+
+.glassBlack {
+  background: linear-gradient(135deg, rgba(190, 185, 230, 0.22), rgba(30, 26, 60, 0.14));
+  border-color: rgba(210, 205, 255, 0.42);
+}
+
+.pieceImg {
+  position: relative;
+  z-index: 1;
+  width: 84%;
+  height: 84%;
+  object-fit: contain;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.45));
+}
+
+.glyph {
+  position: relative;
+  z-index: 1;
+  font-size: clamp(19px, 6.6vw, 36px);
+  line-height: 1;
+}
+
+.white {
+  color: #ffffff;
+  text-shadow: 0 1px 0 #9a9ab0, 0 0 3px rgba(0, 0, 0, 0.6), 0 2px 4px rgba(0, 0, 0, 0.45);
+}
+
+.black {
+  color: #16142e;
+  text-shadow: 0 1px 0 #cfcae8, 0 0 3px rgba(255, 255, 255, 0.55);
+}
+
+/* Indicadores de movimiento */
+.dot {
+  position: absolute;
+  width: 26%;
+  height: 26%;
+  border-radius: 50%;
+  background: rgba(40, 30, 80, 0.45);
+  z-index: 1;
+  animation: popDot 0.18s ease-out;
+}
+
+.captureRing {
+  position: absolute;
+  inset: 8%;
+  border-radius: 50%;
+  border: 4px solid rgba(255, 95, 162, 0.85);
+  z-index: 1;
+  box-sizing: border-box;
+}
+
+/* ── Partículas de captura ── */
+.burst {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.spark {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+/* ── Capturas ── */
+.capturedRow {
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.capStrip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 28px;
+  padding: 4px var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+.capLabel {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary);
+  min-width: 56px;
+}
+
+.capGlyphs {
+  flex: 1;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--color-text-primary);
+  letter-spacing: -2px;
+}
+
+.capAdv {
+  font-size: var(--text-caption);
+  font-weight: 800;
+  color: var(--color-income);
+}
+
+/* ── Resultado ── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: rgba(0, 0, 0, 0.72);
+  overflow: hidden;
+}
+
+.resultCard {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 320px;
+  text-align: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-modal);
+  padding: var(--space-8) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.resultTitle {
+  font-size: var(--text-hero);
+  font-weight: 800;
+  color: var(--color-text-primary);
+}
+
+.resultSub {
+  font-size: var(--text-label);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-4);
+}
+
+.playAgain {
+  min-height: 48px;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: var(--text-body);
+  font-weight: 700;
+  box-shadow: var(--shadow-primary);
+}
+
+/* ── Confeti ── */
+.confetti {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.confettiPiece {
+  position: absolute;
+  top: 0;
+  width: 10px;
+  height: 14px;
+  border-radius: 2px;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+@keyframes popDot {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .turnCheck, .check { animation: none; }
+}

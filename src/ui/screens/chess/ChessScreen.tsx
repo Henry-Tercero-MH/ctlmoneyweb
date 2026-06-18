@@ -1,0 +1,398 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Chess, type Square, type Color, type PieceSymbol } from 'chess.js';
+import { AnimatePresence, motion } from 'framer-motion';
+import { RotateCcw, Volume2, VolumeX, Bot, Users } from 'lucide-react';
+import { pickAiMove } from '@/core/chessAI';
+import { sfx } from '@/core/sfx';
+import styles from './ChessScreen.module.css';
+
+const FILES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+
+const GLYPH: Record<string, string> = {
+  wk: '♔', wq: '♕', wr: '♖', wb: '♗', wn: '♘', wp: '♙',
+  bk: '♚', bq: '♛', br: '♜', bb: '♝', bn: '♞', bp: '♟',
+};
+
+const VALUE: Record<PieceSymbol, number> = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
+
+type Mode = 'ai' | 'two';
+type Outcome = { kind: 'win' | 'lose' | 'draw'; title: string; sub: string } | null;
+
+function squareName(row: number, col: number): Square {
+  return `${FILES[col]}${8 - row}` as Square;
+}
+
+export default function ChessScreen() {
+  const gameRef = useRef(new Chess());
+  const game = gameRef.current;
+
+  const [, setTick] = useState(0);
+  const refresh = useCallback(() => setTick((t) => t + 1), []);
+
+  const [mode, setMode] = useState<Mode>('ai');
+  const [selected, setSelected] = useState<Square | null>(null);
+  const [targets, setTargets] = useState<Square[]>([]);
+  const [lastMove, setLastMove] = useState<{ from: Square; to: Square } | null>(null);
+  const [burst, setBurst] = useState<{ square: Square; id: number } | null>(null);
+  const [muted, setMuted] = useState(false);
+  const [outcome, setOutcome] = useState<Outcome>(null);
+  const aiTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const board = game.board();
+  const turn = game.turn();
+  const inCheck = game.isCheck();
+  const checkSquare = inCheck ? findKing(game, turn) : null;
+
+  // Limpia timers al desmontar
+  useEffect(() => () => { if (aiTimer.current) clearTimeout(aiTimer.current); }, []);
+
+  function evaluateEnd() {
+    if (!game.isGameOver()) {
+      if (game.isCheck()) sfx.check();
+      return false;
+    }
+    if (game.isCheckmate()) {
+      // Quien acaba de mover ganó (turno actual = perdedor).
+      const loser = game.turn();
+      if (mode === 'ai') {
+        if (loser === 'b') { sfx.win(); setOutcome({ kind: 'win', title: '¡Ganaste! 🏆', sub: 'Jaque mate a la IA' }); }
+        else { sfx.lose(); setOutcome({ kind: 'lose', title: 'Jaque mate 😵', sub: 'Te ganó la IA' }); }
+      } else {
+        sfx.win();
+        const winner = loser === 'w' ? 'Negras' : 'Blancas';
+        setOutcome({ kind: 'win', title: `¡Ganan ${winner}! 🏆`, sub: 'Jaque mate' });
+      }
+    } else {
+      sfx.draw();
+      setOutcome({ kind: 'draw', title: 'Tablas 🤝', sub: game.isStalemate() ? 'Rey ahogado' : 'Empate' });
+    }
+    return true;
+  }
+
+  const applyMove = useCallback((from: Square, to: Square) => {
+    const mv = game.move({ from, to, promotion: 'q' });
+    if (!mv) return;
+
+    setSelected(null);
+    setTargets([]);
+    setLastMove({ from, to });
+
+    if (mv.captured) {
+      sfx.capture();
+      setBurst({ square: to, id: Date.now() });
+      setTimeout(() => setBurst(null), 650);
+    } else if (mv.isKingsideCastle() || mv.isQueensideCastle()) {
+      sfx.castle();
+    } else {
+      sfx.move();
+    }
+
+    refresh();
+    const ended = evaluateEnd();
+
+    if (!ended && mode === 'ai' && game.turn() === 'b') {
+      aiTimer.current = setTimeout(() => {
+        const aimv = pickAiMove(game);
+        if (!aimv) return;
+        const res = game.move(aimv);
+        setLastMove({ from: res.from as Square, to: res.to as Square });
+        if (res.captured) {
+          sfx.capture();
+          setBurst({ square: res.to as Square, id: Date.now() });
+          setTimeout(() => setBurst(null), 650);
+        } else if (res.isKingsideCastle() || res.isQueensideCastle()) {
+          sfx.castle();
+        } else {
+          sfx.move();
+        }
+        refresh();
+        evaluateEnd();
+      }, 450);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, refresh]);
+
+  function onSquareClick(sq: Square) {
+    sfx.unlock();
+    if (outcome) return;
+    if (mode === 'ai' && turn === 'b') return; // turno de la IA
+
+    const piece = game.get(sq);
+
+    if (selected) {
+      if (targets.includes(sq)) {
+        applyMove(selected, sq);
+        return;
+      }
+      if (piece && piece.color === turn) {
+        selectSquare(sq);
+        return;
+      }
+      setSelected(null);
+      setTargets([]);
+      return;
+    }
+
+    if (piece && piece.color === turn) selectSquare(sq);
+  }
+
+  function selectSquare(sq: Square) {
+    const moves = game.moves({ square: sq, verbose: true });
+    setSelected(sq);
+    setTargets(moves.map((m) => m.to as Square));
+    sfx.select();
+  }
+
+  function reset() {
+    if (aiTimer.current) clearTimeout(aiTimer.current);
+    game.reset();
+    setSelected(null);
+    setTargets([]);
+    setLastMove(null);
+    setBurst(null);
+    setOutcome(null);
+    refresh();
+  }
+
+  function changeMode(m: Mode) {
+    setMode(m);
+    reset();
+  }
+
+  function toggleMute() {
+    const next = !muted;
+    setMuted(next);
+    sfx.setMuted(next);
+    if (!next) sfx.select();
+  }
+
+  // Material capturado para la barra de ventaja
+  const captured = capturedPieces(game);
+
+  return (
+    <div className={styles.screen}>
+      <header className={styles.header}>
+        <h1 className={styles.title}>Ajedrez</h1>
+        <div className={styles.headerActions}>
+          <button className={styles.iconBtn} onClick={toggleMute} type="button" aria-label="Silencio">
+            {muted ? <VolumeX size={18} strokeWidth={2} /> : <Volume2 size={18} strokeWidth={2} />}
+          </button>
+          <button className={styles.iconBtn} onClick={reset} type="button" aria-label="Reiniciar">
+            <RotateCcw size={18} strokeWidth={2} />
+          </button>
+        </div>
+      </header>
+
+      <div className={styles.body}>
+        {/* Modo */}
+        <div className={styles.modeRow}>
+          <button
+            className={`${styles.modeBtn} ${mode === 'ai' ? styles.modeActive : ''}`}
+            onClick={() => changeMode('ai')}
+            type="button"
+          >
+            <Bot size={16} strokeWidth={2} /> vs IA
+          </button>
+          <button
+            className={`${styles.modeBtn} ${mode === 'two' ? styles.modeActive : ''}`}
+            onClick={() => changeMode('two')}
+            type="button"
+          >
+            <Users size={16} strokeWidth={2} /> 2 jugadores
+          </button>
+        </div>
+
+        {/* Estado del turno */}
+        <div className={`${styles.turnBar} ${inCheck ? styles.turnCheck : ''}`}>
+          <span className={`${styles.turnDot} ${turn === 'w' ? styles.dotWhite : styles.dotBlack}`} />
+          {outcome
+            ? 'Partida terminada'
+            : inCheck
+              ? `¡Jaque! Mueven ${turn === 'w' ? 'blancas' : 'negras'}`
+              : `Mueven ${turn === 'w' ? 'blancas' : 'negras'}`}
+        </div>
+
+        {/* Tablero */}
+        <div className={styles.boardWrap}>
+          <div className={styles.board}>
+            {board.map((rowArr, r) =>
+              rowArr.map((cell, c) => {
+                const sq = squareName(r, c);
+                const dark = (r + c) % 2 === 1;
+                const isSel = selected === sq;
+                const isTarget = targets.includes(sq);
+                const isLast = lastMove && (lastMove.from === sq || lastMove.to === sq);
+                const isCheck = checkSquare === sq;
+                const pieceKey = cell ? `${cell.color}${cell.type}` : null;
+
+                return (
+                  <div
+                    key={sq}
+                    className={[
+                      styles.cell,
+                      dark ? styles.dark : styles.light,
+                      isSel ? styles.selected : '',
+                      isLast ? styles.lastMove : '',
+                      isCheck ? styles.check : '',
+                    ].join(' ')}
+                    onClick={() => onSquareClick(sq)}
+                    role="button"
+                    tabIndex={0}
+                  >
+                    {isTarget && <span className={cell ? styles.captureRing : styles.dot} />}
+
+                    <AnimatePresence mode="popLayout">
+                      {pieceKey && (
+                        <motion.span
+                          key={pieceKey + sq}
+                          className={styles.piece}
+                          initial={{ scale: 0, rotate: -25 }}
+                          animate={{ scale: 1, rotate: 0 }}
+                          exit={{ scale: 0, opacity: 0 }}
+                          transition={{ type: 'spring', stiffness: 600, damping: 22 }}
+                          whileTap={{ scale: 1.18 }}
+                        >
+                          <span className={`${styles.glass} ${cell!.color === 'w' ? styles.glassWhite : styles.glassBlack}`} />
+                          <img
+                            src={`${import.meta.env.BASE_URL}pieces/${pieceKey}.svg`}
+                            alt=""
+                            className={styles.pieceImg}
+                            draggable={false}
+                          />
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
+
+                    {burst?.square === sq && <Burst key={burst.id} />}
+                  </div>
+                );
+              }),
+            )}
+          </div>
+        </div>
+
+        {/* Capturas / ventaja */}
+        <div className={styles.capturedRow}>
+          <CapturedStrip glyphsColor="b" list={captured.byWhite} advantage={captured.advantage} side="w" />
+          <CapturedStrip glyphsColor="w" list={captured.byBlack} advantage={-captured.advantage} side="b" />
+        </div>
+      </div>
+
+      {/* Resultado */}
+      <AnimatePresence>
+        {outcome && (
+          <motion.div
+            className={styles.overlay}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            {outcome.kind !== 'lose' && <Confetti />}
+            <motion.div
+              className={styles.resultCard}
+              initial={{ scale: 0.7, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 24 }}
+            >
+              <p className={styles.resultTitle}>{outcome.title}</p>
+              <p className={styles.resultSub}>{outcome.sub}</p>
+              <button className={styles.playAgain} onClick={reset} type="button">
+                Jugar de nuevo
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// ── Subcomponentes ──────────────────────────────────────────────────────────
+
+function Burst() {
+  const parts = Array.from({ length: 10 });
+  return (
+    <div className={styles.burst} aria-hidden>
+      {parts.map((_, i) => {
+        const angle = (i / parts.length) * Math.PI * 2;
+        const dist = 26 + Math.random() * 16;
+        return (
+          <motion.span
+            key={i}
+            className={styles.spark}
+            initial={{ x: 0, y: 0, scale: 1, opacity: 1 }}
+            animate={{ x: Math.cos(angle) * dist, y: Math.sin(angle) * dist, scale: 0, opacity: 0 }}
+            transition={{ duration: 0.6, ease: 'easeOut' }}
+            style={{ background: ['#ff5fa2', '#ffd166', '#5fd0ff', '#9b5fff'][i % 4] }}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+function Confetti() {
+  const parts = Array.from({ length: 40 });
+  const colors = ['#ff5fa2', '#ffd166', '#5fd0ff', '#9b5fff', '#5fffa6'];
+  return (
+    <div className={styles.confetti} aria-hidden>
+      {parts.map((_, i) => (
+        <motion.span
+          key={i}
+          className={styles.confettiPiece}
+          initial={{ y: -40, x: `${Math.random() * 100}%`, rotate: 0, opacity: 1 }}
+          animate={{ y: '110vh', rotate: 720, opacity: 0.9 }}
+          transition={{ duration: 1.6 + Math.random() * 1.2, delay: Math.random() * 0.5, ease: 'easeIn' }}
+          style={{ background: colors[i % colors.length], left: `${Math.random() * 100}%` }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function CapturedStrip({
+  glyphsColor,
+  list,
+  advantage,
+  side,
+}: {
+  glyphsColor: Color;
+  list: PieceSymbol[];
+  advantage: number;
+  side: Color;
+}) {
+  return (
+    <div className={styles.capStrip}>
+      <span className={styles.capLabel}>{side === 'w' ? 'Blancas' : 'Negras'}</span>
+      <span className={styles.capGlyphs}>
+        {list.map((p, i) => (
+          <span key={i}>{GLYPH[`${glyphsColor}${p}`]}</span>
+        ))}
+      </span>
+      {advantage > 0 && <span className={styles.capAdv}>+{advantage}</span>}
+    </div>
+  );
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function findKing(game: Chess, color: Color): Square | null {
+  for (const row of game.board()) {
+    for (const cell of row) {
+      if (cell && cell.type === 'k' && cell.color === color) return cell.square;
+    }
+  }
+  return null;
+}
+
+function capturedPieces(game: Chess): { byWhite: PieceSymbol[]; byBlack: PieceSymbol[]; advantage: number } {
+  const byWhite: PieceSymbol[] = []; // piezas negras capturadas por blancas
+  const byBlack: PieceSymbol[] = [];
+  for (const m of game.history({ verbose: true })) {
+    if (!m.captured) continue;
+    if (m.color === 'w') byWhite.push(m.captured);
+    else byBlack.push(m.captured);
+  }
+  const sum = (arr: PieceSymbol[]) => arr.reduce((s, p) => s + (VALUE[p] ?? 0), 0);
+  return { byWhite, byBlack, advantage: sum(byWhite) - sum(byBlack) };
+}
