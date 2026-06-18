@@ -17,10 +17,10 @@
 
 .title {
   font-size: var(--text-title);
-  font-weight: 700;
+  font-weight: 800;
   color: var(--color-text-primary);
   margin-bottom: var(--space-3);
-  letter-spacing: -0.3px;
+  letter-spacing: -0.5px;
 }
 
 .searchWrap {
@@ -38,20 +38,21 @@
 
 .searchInput {
   width: 100%;
-  height: 40px;
+  height: 42px;
   padding: 0 var(--space-3) 0 calc(var(--space-3) + 20px + var(--space-2));
   border: 1.5px solid var(--color-border);
   border-radius: var(--radius-pill);
   background: var(--color-surface-2);
   font-size: var(--text-label);
   color: var(--color-text-primary);
-  transition: border-color var(--transition-fast);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .searchInput:focus {
   outline: none;
   border-color: var(--color-primary);
   background: var(--color-surface);
+  box-shadow: 0 0 0 3px var(--color-primary-glow);
 }
 
 /* ── Body scrollable ── */
@@ -82,19 +83,21 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 var(--space-1);
+  padding: 0 var(--space-2);
 }
 
 .dayLabel {
-  font-size: var(--text-caption);
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 700;
   color: var(--color-text-secondary);
-  text-transform: capitalize;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 .dayTotal {
   font-size: var(--text-caption);
-  font-weight: 600;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 .positive { color: var(--color-income); }
@@ -112,7 +115,12 @@
   justify-content: space-between;
   padding: var(--space-3) var(--space-4);
   gap: var(--space-3);
-  min-height: 56px;
+  min-height: 60px;
+  transition: background var(--transition-fast);
+}
+
+.txRow:active {
+  background: var(--color-surface-2);
 }
 
 .txBorder {
@@ -133,11 +141,13 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-weight: 500;
 }
 
 .txKind {
   font-size: var(--text-caption);
   color: var(--color-text-disabled);
+  text-transform: capitalize;
 }
 
 .txRight {
@@ -149,7 +159,8 @@
 
 .txAmount {
   font-size: var(--text-label);
-  font-weight: 600;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 .incomeText { color: var(--color-income); }
@@ -164,23 +175,24 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: var(--radius-input);
   color: var(--color-text-disabled);
   transition: color var(--transition-fast), background var(--transition-fast);
 }
 
-.actionBtn:hover {
+.actionBtn:hover,
+.actionBtn:active {
   color: var(--color-expense);
-  background: color-mix(in srgb, var(--color-expense) 10%, transparent);
+  background: color-mix(in srgb, var(--color-expense) 12%, transparent);
 }
 
 /* ── Confirmación de borrado ── */
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(0, 0, 0, 0.7);
   z-index: 50;
   display: flex;
   align-items: flex-end;
@@ -189,7 +201,8 @@
 .confirmSheet {
   width: 100%;
   background: var(--color-surface);
-  border-radius: var(--radius-card) var(--radius-card) 0 0;
+  border-radius: 20px 20px 0 0;
+  border-top: 1px solid var(--color-border);
   padding: var(--space-6) var(--space-4);
   padding-bottom: max(var(--safe-bottom), var(--space-6));
   display: flex;
@@ -199,7 +212,7 @@
 
 .confirmText {
   font-size: var(--text-body);
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-text-primary);
   text-align: center;
 }

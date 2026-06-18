@@ -11,24 +11,25 @@
   align-items: baseline;
   justify-content: center;
   gap: var(--space-2);
-  padding: var(--space-3) 0;
-  min-height: 64px;
+  padding: var(--space-4) 0 var(--space-2);
+  min-height: 72px;
 }
 
 .currency {
-  font-size: var(--text-label);
-  font-weight: 600;
-  color: var(--color-text-secondary);
+  font-size: var(--text-body);
+  font-weight: 700;
+  color: var(--color-primary);
 }
 
 .amount {
-  font-size: 42px;
-  font-weight: 700;
-  letter-spacing: -1.5px;
+  font-size: 48px;
+  font-weight: 800;
+  letter-spacing: -2px;
   font-variant-numeric: tabular-nums;
   color: var(--color-text-primary);
   min-width: 120px;
   text-align: center;
+  line-height: 1;
 }
 
 /* ── Campos ── */
@@ -40,11 +41,11 @@
 }
 
 .fieldLabel {
-  font-size: var(--text-caption);
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 700;
   color: var(--color-text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.07em;
 }
 
 .fieldRow {
@@ -55,14 +56,14 @@
 /* ── Select / Input ── */
 .select,
 .input {
-  height: 44px;
+  height: 46px;
   padding: 0 var(--space-3);
   border: 1.5px solid var(--color-border);
   border-radius: var(--radius-input);
-  background: var(--color-surface);
+  background: var(--color-surface-2);
   color: var(--color-text-primary);
   font-size: var(--text-label);
-  transition: border-color var(--transition-fast);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
   appearance: auto;
 }
 
@@ -70,6 +71,8 @@
 .input:focus {
   outline: none;
   border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-glow);
+  background: var(--color-surface);
 }
 
 /* ── Grid de categorías ── */
@@ -86,23 +89,24 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   padding: var(--space-2) var(--space-1);
   border-radius: var(--radius-input);
   background: var(--color-surface-2);
   border: 1.5px solid transparent;
   cursor: pointer;
-  transition: border-color var(--transition-fast), background var(--transition-fast);
-  min-height: 60px;
+  transition: border-color var(--transition-fast), background var(--transition-fast), box-shadow var(--transition-fast);
+  min-height: 64px;
 }
 
 .catBtn.catSelected {
   border-color: var(--color-primary);
-  background: color-mix(in srgb, var(--color-primary) 10%, var(--color-surface));
+  background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface));
+  box-shadow: 0 0 0 1px var(--color-primary-glow);
 }
 
 .catIcon {
-  font-size: 20px;
+  font-size: 22px;
   line-height: 1;
 }
 
@@ -116,5 +120,5 @@
 
 .catBtn.catSelected .catName {
   color: var(--color-primary);
-  font-weight: 600;
+  font-weight: 700;
 }

@@ -9,26 +9,38 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Área táctil mínima 44pt — las teclas son grandes para input rápido */
-  min-height: 56px;
+  min-height: 60px;
   border-radius: var(--radius-card);
-  font-size: 22px;
-  font-weight: 500;
+  font-size: 24px;
+  font-weight: 600;
   background: var(--color-surface-2);
   color: var(--color-text-primary);
-  transition: background var(--transition-fast), transform 80ms ease;
+  border: 1px solid var(--color-border);
+  transition: background var(--transition-fast), transform 80ms ease, box-shadow var(--transition-fast);
   -webkit-tap-highlight-color: transparent;
   user-select: none;
 }
 
 .key:active {
-  background: var(--color-border);
-  transform: scale(0.95);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  border-color: var(--color-primary);
+  transform: scale(0.94);
+  box-shadow: var(--shadow-primary);
 }
 
 .del {
-  background: color-mix(in srgb, var(--color-expense) 12%, var(--color-surface-2));
+  background: color-mix(in srgb, var(--color-expense) 10%, var(--color-surface-2));
   color: var(--color-expense);
+  border-color: transparent;
+  font-size: 18px;
+}
+
+.del:active {
+  background: var(--color-expense);
+  color: #fff;
+  border-color: var(--color-expense);
+  box-shadow: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

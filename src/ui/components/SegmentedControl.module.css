@@ -1,6 +1,7 @@
 .group {
   display: flex;
   background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-pill);
   padding: 3px;
   gap: 2px;
@@ -17,7 +18,7 @@
 }
 
 .active {
-  background: var(--color-surface);
-  color: var(--color-text-primary);
-  box-shadow: var(--shadow-card);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  box-shadow: var(--shadow-primary);
 }
