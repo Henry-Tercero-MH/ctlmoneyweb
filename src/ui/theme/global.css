@@ -11,6 +11,10 @@
 html {
   height: 100%;
   overflow: hidden;
+  /* La franja del home indicator (PWA en iOS) que queda fuera del 100dvh
+     toma este color: igual al de la barra de navegación para que se vea
+     como una continuación y no como un espacio en blanco. */
+  background: var(--color-surface);
 }
 
 body {
