@@ -52,21 +52,23 @@ export function useCreateTransaction(yearMonth: string) {
       toast.error(t.common.saveError);
     },
     onSettled: () => {
-      qc.invalidateQueries({ queryKey: QK.transactions(yearMonth) });
-      qc.invalidateQueries({ queryKey: QK.transactionSummary(yearMonth) });
+      // Invalida todos los meses: una transacción puede caer en cualquier mes.
+      qc.invalidateQueries({ queryKey: ['transactions'] });
+      qc.invalidateQueries({ queryKey: ['transactionSummary'] });
       qc.invalidateQueries({ queryKey: QK.accountBalances() });
     },
   });
 }
 
-export function useUpdateTransaction(yearMonth: string) {
+export function useUpdateTransaction(_yearMonth?: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: CreateTransactionPayload) =>
       transactionsApi.update(payload, `${payload.id}-${uuid()}`),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: QK.transactions(yearMonth) });
-      qc.invalidateQueries({ queryKey: QK.transactionSummary(yearMonth) });
+      // Editar la fecha puede mover el movimiento de mes: invalida todos.
+      qc.invalidateQueries({ queryKey: ['transactions'] });
+      qc.invalidateQueries({ queryKey: ['transactionSummary'] });
       qc.invalidateQueries({ queryKey: QK.accountBalances() });
       toast.success(t.common.saved);
     },
@@ -92,7 +94,8 @@ export function useDeleteTransaction(yearMonth: string) {
     },
     onSuccess: () => toast.success(t.common.deleted),
     onSettled: () => {
-      qc.invalidateQueries({ queryKey: QK.transactionSummary(yearMonth) });
+      qc.invalidateQueries({ queryKey: ['transactions'] });
+      qc.invalidateQueries({ queryKey: ['transactionSummary'] });
       qc.invalidateQueries({ queryKey: QK.accountBalances() });
     },
   });
