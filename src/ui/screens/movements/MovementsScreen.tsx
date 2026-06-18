@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Search, Trash2 } from 'lucide-react';
+import { Search, Trash2, Pencil, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTransactions, useDeleteTransaction } from '@/hooks/useTransactions';
 import { useUiStore } from '@/stores/uiStore';
 import { currentYearMonth, formatDate } from '@/core/dates';
@@ -27,15 +27,45 @@ function groupByDay(txs: TransactionDTO[]): DayGroup[] {
     .map(([date, items]) => ({ date, label: formatDate(date), items }));
 }
 
+function prevMonth(ym: string): string {
+  const parts = ym.split('-');
+  const y = Number(parts[0]);
+  const m = Number(parts[1]);
+  if (m === 1) return `${y - 1}-12`;
+  return `${y}-${String(m - 1).padStart(2, '0')}`;
+}
+
+function nextMonth(ym: string): string {
+  const parts = ym.split('-');
+  const y = Number(parts[0]);
+  const m = Number(parts[1]);
+  if (m === 12) return `${y + 1}-01`;
+  return `${y}-${String(m + 1).padStart(2, '0')}`;
+}
+
+function monthLabel(ym: string): string {
+  const parts = ym.split('-');
+  const y = Number(parts[0]);
+  const m = Number(parts[1]);
+  return new Date(y, m - 1, 1).toLocaleString('es', { month: 'long', year: 'numeric' });
+}
+
+function isCurrentOrFuture(ym: string): boolean {
+  const now = new Date();
+  const cur = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  return ym >= cur;
+}
+
 export default function MovementsScreen() {
-  const yearMonth = currentYearMonth();
   const currency = useUiStore((s) => s.activeCurrency) as CurrencyCode;
   const openRegister = useUiStore((s) => s.openRegister);
+  const openEdit = useUiStore((s) => s.openEditTransaction);
+  const [ym, setYm] = useState(currentYearMonth());
   const [search, setSearch] = useState('');
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
-  const { data: transactions = [], isLoading } = useTransactions(yearMonth, search);
-  const deleteTx = useDeleteTransaction(yearMonth);
+  const { data: transactions = [], isLoading } = useTransactions(ym, search);
+  const deleteTx = useDeleteTransaction(ym);
 
   const groups = useMemo(() => groupByDay(transactions), [transactions]);
 
@@ -61,6 +91,23 @@ export default function MovementsScreen() {
           />
         </div>
       </header>
+
+      {/* ── Selector de mes ── */}
+      <div className={styles.monthNav}>
+        <button className={styles.monthBtn} onClick={() => setYm(prevMonth(ym))} type="button" aria-label="Mes anterior">
+          <ChevronLeft size={20} strokeWidth={2} />
+        </button>
+        <span className={styles.monthLabel}>{monthLabel(ym)}</span>
+        <button
+          className={styles.monthBtn}
+          onClick={() => setYm(nextMonth(ym))}
+          type="button"
+          aria-label="Mes siguiente"
+          disabled={isCurrentOrFuture(ym)}
+        >
+          <ChevronRight size={20} strokeWidth={2} />
+        </button>
+      </div>
 
       {/* ── Lista ── */}
       <div className={styles.body}>
@@ -123,11 +170,19 @@ export default function MovementsScreen() {
                         <div className={styles.txActions}>
                           <button
                             className={styles.actionBtn}
+                            onClick={() => openEdit(tx)}
+                            aria-label={t.movements.edit}
+                            type="button"
+                          >
+                            <Pencil size={14} strokeWidth={1.75} />
+                          </button>
+                          <button
+                            className={`${styles.actionBtn} ${styles.actionDelete}`}
                             onClick={() => setConfirmDelete(tx.id)}
                             aria-label={t.movements.delete}
                             type="button"
                           >
-                            <Trash2 size={15} strokeWidth={1.75} />
+                            <Trash2 size={14} strokeWidth={1.75} />
                           </button>
                         </div>
                       </div>
@@ -140,7 +195,7 @@ export default function MovementsScreen() {
         )}
       </div>
 
-      {/* ── Modal de confirmación de borrado ── */}
+      {/* ── Confirm delete ── */}
       {confirmDelete && (
         <div className={styles.overlay} role="dialog" aria-modal="true" aria-label={t.movements.deleteConfirm}>
           <div className={styles.confirmSheet}>

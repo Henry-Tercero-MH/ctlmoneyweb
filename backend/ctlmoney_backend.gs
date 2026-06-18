@@ -938,6 +938,109 @@ function exportData_(payload) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// RECURRING TRIGGER — Generación automática de movimientos recurrentes
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Punto de entrada del trigger diario.
+ * Configurar en Apps Script: Triggers → Agregar trigger → processDailyRecurring
+ * Tipo: Time-driven → Day timer → cualquier hora.
+ */
+function processDailyRecurring() {
+  var today = nowIso_().slice(0, 10); // YYYY-MM-DD
+  var rules = readAll_('recurring_rules').filter(function (r) {
+    return r.active !== false && r.next_run_date && r.next_run_date <= today;
+  });
+
+  var generated = [];
+  rules.forEach(function (rule) {
+    // Verificar fecha de fin
+    if (rule.end_date && rule.end_date < today) {
+      // Desactivar regla vencida
+      rule.active = false;
+      updateRow_('recurring_rules', rule.id, rule);
+      return;
+    }
+
+    // Generar transacción
+    var txId = Utilities.getUuid();
+    var txn = {
+      id: txId,
+      account_id: rule.account_id,
+      category_id: rule.category_id,
+      kind: rule.kind,
+      amount_minor: Number(rule.amount_minor),
+      date: rule.next_run_date,
+      note: rule.note || '',
+      transfer_account_id: '',
+      recurring_id: rule.id,
+      idempotency_id: rule.id + '-' + rule.next_run_date,
+      receipt_url: '',
+      created_at: nowIso_(),
+      updated_at: nowIso_(),
+    };
+
+    // Evitar duplicados por idempotency_id
+    var existing = readAll_('transactions').some(function (t) {
+      return t.idempotency_id === txn.idempotency_id;
+    });
+    if (!existing) {
+      appendRow_('transactions', txn);
+      generated.push(txId);
+    }
+
+    // Calcular próxima fecha
+    rule.next_run_date = nextRunDate_(rule.next_run_date, rule.frequency);
+    updateRow_('recurring_rules', rule.id, rule);
+  });
+
+  Logger.log('processDailyRecurring: ' + generated.length + ' transacciones generadas.');
+  return { generated: generated.length, date: today };
+}
+
+/**
+ * Instala el trigger diario automáticamente (ejecutar una vez desde el editor).
+ * Si ya existe, no duplica.
+ */
+function installDailyTrigger() {
+  var triggers = ScriptApp.getProjectTriggers();
+  for (var i = 0; i < triggers.length; i++) {
+    if (triggers[i].getHandlerFunction() === 'processDailyRecurring') {
+      Logger.log('Trigger ya existe.');
+      return;
+    }
+  }
+  ScriptApp.newTrigger('processDailyRecurring')
+    .timeBased()
+    .everyDays(1)
+    .atHour(7) // 7 AM zona horaria del script
+    .create();
+  Logger.log('Trigger diario instalado.');
+}
+
+function nextRunDate_(dateStr, frequency) {
+  var parts = dateStr.split('-');
+  var y = parseInt(parts[0], 10);
+  var m = parseInt(parts[1], 10) - 1; // 0-indexed
+  var d = parseInt(parts[2], 10);
+  var dt = new Date(y, m, d);
+
+  switch (frequency) {
+    case 'daily':     dt.setDate(dt.getDate() + 1);   break;
+    case 'weekly':    dt.setDate(dt.getDate() + 7);   break;
+    case 'biweekly':  dt.setDate(dt.getDate() + 14);  break;
+    case 'monthly':   dt.setMonth(dt.getMonth() + 1); break;
+    case 'yearly':    dt.setFullYear(dt.getFullYear() + 1); break;
+    default:          dt.setMonth(dt.getMonth() + 1); break;
+  }
+
+  var ny = dt.getFullYear();
+  var nm = ('0' + (dt.getMonth() + 1)).slice(-2);
+  var nd = ('0' + dt.getDate()).slice(-2);
+  return ny + '-' + nm + '-' + nd;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // DRIVE — Subida de imágenes a Google Drive
 // ─────────────────────────────────────────────────────────────────────────────
 

@@ -55,6 +55,47 @@
   box-shadow: 0 0 0 3px var(--color-primary-glow);
 }
 
+/* ── Selector de mes ── */
+.monthNav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg);
+}
+
+.monthBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-input);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.monthBtn:active {
+  background: var(--color-primary-glow);
+  color: var(--color-primary);
+}
+
+.monthBtn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.monthLabel {
+  font-size: var(--text-label);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  text-transform: capitalize;
+}
+
 /* ── Body scrollable ── */
 .body {
   flex: 1;
@@ -184,6 +225,12 @@
 
 .actionBtn:hover,
 .actionBtn:active {
+  color: var(--color-primary);
+  background: var(--color-primary-glow);
+}
+
+.actionDelete:hover,
+.actionDelete:active {
   color: var(--color-expense);
   background: color-mix(in srgb, var(--color-expense) 12%, transparent);
 }

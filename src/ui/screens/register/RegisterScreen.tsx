@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { v4 as uuid } from 'uuid';
 import { BottomSheet } from '@/ui/components/BottomSheet';
 import { SegmentedControl } from '@/ui/components/SegmentedControl';
@@ -7,7 +7,7 @@ import { NumericKeyboard } from './NumericKeyboard';
 import { useUiStore } from '@/stores/uiStore';
 import { useCategories } from '@/hooks/useCategories';
 import { useAccounts } from '@/hooks/useAccounts';
-import { useCreateTransaction } from '@/hooks/useTransactions';
+import { useCreateTransaction, useUpdateTransaction } from '@/hooks/useTransactions';
 import { currentYearMonth, todayISO } from '@/core/dates';
 import { parseMoney, formatAmount, money, ZERO } from '@/core/money';
 import { CategoryIcon } from '@/ui/components/CategoryIcon';
@@ -22,15 +22,23 @@ const KIND_OPTIONS = [
   { value: 'transfer' as TransactionKind, label: t.register.transfer },
 ];
 
+function amountToRaw(minor: number, currency: CurrencyCode): string {
+  const decimals = currency === 'GTQ' || currency === 'USD' || currency === 'MXN' || currency === 'EUR' ? 2 : 2;
+  return (minor / 10 ** decimals).toFixed(decimals);
+}
+
 export function RegisterScreen() {
   const open = useUiStore((s) => s.registerOpen);
   const close = useUiStore((s) => s.closeRegister);
+  const editingTx = useUiStore((s) => s.editingTransaction);
   const currency = useUiStore((s) => s.activeCurrency) as CurrencyCode;
   const yearMonth = currentYearMonth();
+  const isEditing = editingTx !== null;
 
   const { data: categories = [] } = useCategories();
   const { data: accounts = [] } = useAccounts();
   const createTx = useCreateTransaction(yearMonth);
+  const updateTx = useUpdateTransaction(yearMonth);
 
   // ── Form state ──
   const [kind, setKind] = useState<TransactionKind>('expense');
@@ -41,10 +49,35 @@ export function RegisterScreen() {
   const [date, setDate] = useState(todayISO());
   const [note, setNote] = useState('');
 
+  // Pre-llenar al abrir en modo edición
+  useEffect(() => {
+    if (editingTx) {
+      setKind(editingTx.kind);
+      setRawAmount(amountToRaw(editingTx.amount_minor, currency));
+      setCategoryId(editingTx.category_id);
+      setAccountId(editingTx.account_id);
+      setTransferAccountId(editingTx.transfer_account_id ?? '');
+      setDate(editingTx.date);
+      setNote(editingTx.note ?? '');
+    } else {
+      resetForm();
+    }
+  }, [editingTx]);
+
+  function resetForm() {
+    setKind('expense');
+    setRawAmount('0');
+    setCategoryId('');
+    setAccountId('');
+    setTransferAccountId('');
+    setDate(todayISO());
+    setNote('');
+  }
+
   const amountMoney = parseMoney(rawAmount, currency);
   const isValid =
     amountMoney > ZERO &&
-    categoryId !== '' &&
+    (kind === 'transfer' || categoryId !== '') &&
     accountId !== '' &&
     (kind !== 'transfer' || transferAccountId !== '');
 
@@ -53,10 +86,8 @@ export function RegisterScreen() {
     setRawAmount((prev) => {
       if (key === 'del') return prev.length <= 1 ? '0' : prev.slice(0, -1);
       if (key === '.' && prev.includes('.')) return prev;
-      // Máximo 2 decimales
       const dotIdx = prev.indexOf('.');
       if (dotIdx !== -1 && prev.length - dotIdx > 2) return prev;
-      // Limitar dígitos enteros
       if (prev === '0' && key !== '.') return key;
       return prev + key;
     });
@@ -68,33 +99,40 @@ export function RegisterScreen() {
 
   async function handleSave() {
     if (!isValid) return;
-    const id = uuid();
     close();
-    await createTx.mutateAsync({
-      id,
-      account_id: accountId,
-      category_id: categoryId,
-      kind,
-      amount_minor: amountMoney,
-      date,
-      note: note.trim(),
-      transfer_account_id: kind === 'transfer' ? transferAccountId : undefined,
-    });
-    // Reset form
-    setRawAmount('0');
-    setCategoryId('');
-    setNote('');
+    if (isEditing && editingTx) {
+      await updateTx.mutateAsync({
+        id: editingTx.id,
+        account_id: accountId,
+        category_id: categoryId,
+        kind,
+        amount_minor: amountMoney,
+        date,
+        note: note.trim(),
+        transfer_account_id: kind === 'transfer' ? transferAccountId : undefined,
+      });
+    } else {
+      await createTx.mutateAsync({
+        id: uuid(),
+        account_id: accountId,
+        category_id: categoryId,
+        kind,
+        amount_minor: amountMoney,
+        date,
+        note: note.trim(),
+        transfer_account_id: kind === 'transfer' ? transferAccountId : undefined,
+      });
+    }
+    resetForm();
   }
 
   function handleClose() {
     close();
-    setRawAmount('0');
-    setCategoryId('');
-    setNote('');
+    resetForm();
   }
 
   return (
-    <BottomSheet open={open} title={t.register.title} onClose={handleClose}>
+    <BottomSheet open={open} title={isEditing ? 'Editar movimiento' : t.register.title} onClose={handleClose}>
       <div className={styles.form}>
         {/* Tipo */}
         <SegmentedControl
@@ -205,10 +243,10 @@ export function RegisterScreen() {
         <Button
           block
           onClick={handleSave}
-          disabled={!isValid || createTx.isPending}
+          disabled={!isValid || createTx.isPending || updateTx.isPending}
           aria-label={t.register.save}
         >
-          {createTx.isPending ? t.register.saving : t.register.save}
+          {(createTx.isPending || updateTx.isPending) ? t.register.saving : t.register.save}
         </Button>
       </div>
     </BottomSheet>

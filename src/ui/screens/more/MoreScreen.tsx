@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuid } from 'uuid';
-import { Sun, Moon, ChevronRight, Plus, Trash2, Pencil, PiggyBank, RefreshCw, Target, Download, FileJson, FileText } from 'lucide-react';
+import { Sun, Moon, ChevronRight, Plus, Trash2, Pencil, PiggyBank, RefreshCw, Target, Download, FileJson, FileText, MonitorDown } from 'lucide-react';
+import { usePwaInstall } from '@/hooks/usePwaInstall';
 import { exportApi } from '@/api/endpoints/export';
 import { CategoryIcon, ICON_OPTIONS } from '@/ui/components/CategoryIcon';
 import { useAuthStore } from '@/stores/authStore';
@@ -42,6 +43,7 @@ const BLANK_ACCOUNT: AccountForm = { id: '', name: '', type: 'cash', initial_bal
 const BLANK_CATEGORY: CategoryForm = { id: '', name: '', kind: 'expense', icon: 'otros', color: '#f5c800' };
 
 export default function MoreScreen() {
+  const { canInstall, isInstalled, install } = usePwaInstall();
   const signOut = useAuthStore((s) => s.signOut);
   const profile = useAuthStore((s) => s.profile);
   const theme = useUiStore((s) => s.theme);
@@ -340,6 +342,19 @@ export default function MoreScreen() {
             </div>
           </Card>
         </div>
+
+        {/* ── Instalar app ── */}
+        {(canInstall || isInstalled) && (
+          <button
+            type="button"
+            className={styles.installBtn}
+            onClick={install}
+            disabled={isInstalled}
+          >
+            <MonitorDown size={18} strokeWidth={1.75} />
+            {isInstalled ? 'App instalada' : 'Instalar app'}
+          </button>
+        )}
 
         {/* ── Cerrar sesión ── */}
         <button type="button" className={styles.signOutBtn} onClick={handleSignOut}>
