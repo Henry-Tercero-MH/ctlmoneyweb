@@ -42,8 +42,9 @@ describe('money', () => {
     expect(sum([money(100), money(200), money(300)])).toBe(600);
   });
 
-  it('rechaza no enteros', () => {
-    expect(() => money(10.5)).toThrow();
+  it('redondea no enteros al entero más cercano', () => {
+    expect(money(10.5)).toBe(11);
+    expect(money(10.4)).toBe(10);
   });
 
   it('formatea en GTQ', () => {

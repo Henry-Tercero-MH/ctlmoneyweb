@@ -5,8 +5,10 @@ import { differenceInCalendarDays } from 'date-fns';
 import { Plus, Pencil, Trash2, CalendarClock, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { useCreditCardsStore } from '@/stores/creditCardsStore';
 import { useUiStore } from '@/stores/uiStore';
+import { useAccounts } from '@/hooks/useAccounts';
+import { useTransactions } from '@/hooks/useTransactions';
 import { computeCardCycle, type CreditCard, type AlertLevel } from '@/core/creditCard';
-import { formatLongDate, formatDayMonth, parseISO } from '@/core/dates';
+import { formatLongDate, formatDayMonth, parseISO, currentYearMonth, todayISO } from '@/core/dates';
 import { formatMoney, money } from '@/core/money';
 import { BottomSheet } from '@/ui/components/BottomSheet';
 import { Button } from '@/ui/components/Button';
@@ -14,7 +16,12 @@ import { EmptyState } from '@/ui/components/EmptyState';
 import type { CurrencyCode } from '@/core/money';
 import styles from './CardsScreen.module.css';
 
-const CURRENCIES = ['GTQ', 'USD', 'MXN', 'EUR'];
+function prevYearMonth(ym: string): string {
+  const parts = ym.split('-');
+  const y = Number(parts[0]);
+  const m = Number(parts[1]);
+  return m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, '0')}`;
+}
 
 type Form = {
   id: string;
@@ -22,11 +29,11 @@ type Form = {
   cutoffDay: string;
   paymentDay: string;
   limit: string;
-  currency: string;
+  linkedAccountId: string;
 };
 
-function blankForm(currency: string): Form {
-  return { id: '', name: '', cutoffDay: '8', paymentDay: '2', limit: '', currency };
+function blankForm(): Form {
+  return { id: '', name: '', cutoffDay: '8', paymentDay: '2', limit: '', linkedAccountId: '' };
 }
 
 const LEVEL_LABEL: Record<AlertLevel, string> = {
@@ -40,15 +47,37 @@ export default function CardsScreen() {
   const cards = useCreditCardsStore((s) => s.cards);
   const upsert = useCreditCardsStore((s) => s.upsert);
   const remove = useCreditCardsStore((s) => s.remove);
+  const { data: accounts = [] } = useAccounts();
+
+  // Transacciones del ciclo pueden caer en este mes o el anterior (corte a mitad de mes).
+  const ym = currentYearMonth();
+  const { data: txThis = [] } = useTransactions(ym);
+  const { data: txPrev = [] } = useTransactions(prevYearMonth(ym));
+  const allTx = [...txThis, ...txPrev];
 
   const [sheet, setSheet] = useState(false);
-  const [form, setForm] = useState<Form>(blankForm(activeCurrency));
+  const [form, setForm] = useState<Form>(blankForm());
   const [confirmId, setConfirmId] = useState<string | null>(null);
 
   const isEditing = cards.some((c) => c.id === form.id);
 
+  /** Gasto (kind expense) en la cuenta ligada dentro del ciclo abierto: cycleStart..hoy. */
+  function spentInCycle(card: CreditCard, cycleStart: string): number {
+    if (!card.linkedAccountId) return 0;
+    const today = todayISO();
+    return allTx
+      .filter(
+        (t) =>
+          t.account_id === card.linkedAccountId &&
+          t.kind === 'expense' &&
+          t.date >= cycleStart &&
+          t.date <= today,
+      )
+      .reduce((sum, t) => sum + t.amount_minor, 0);
+  }
+
   function openNew() {
-    setForm(blankForm(activeCurrency));
+    setForm(blankForm());
     setSheet(true);
   }
 
@@ -59,7 +88,7 @@ export default function CardsScreen() {
       cutoffDay: String(card.cutoffDay),
       paymentDay: String(card.paymentDay),
       limit: card.limitMinor > 0 ? String(card.limitMinor / 100) : '',
-      currency: card.currency,
+      linkedAccountId: card.linkedAccountId ?? '',
     });
     setSheet(true);
   }
@@ -77,7 +106,8 @@ export default function CardsScreen() {
       cutoffDay: clampDay(form.cutoffDay),
       paymentDay: clampDay(form.paymentDay),
       limitMinor: form.limit ? Math.round(parseFloat(form.limit.replace(',', '.')) * 100) || 0 : 0,
-      currency: form.currency,
+      currency: activeCurrency,
+      linkedAccountId: form.linkedAccountId,
     });
     setSheet(false);
   }
@@ -112,6 +142,8 @@ export default function CardsScreen() {
             );
             const elapsed = cycleLen - cycle.daysUntilCutoff;
             const pct = Math.min(Math.max((elapsed / cycleLen) * 100, 0), 100);
+            const spent = spentInCycle(card, cycle.cycleStart);
+            const limitPct = card.limitMinor > 0 ? Math.min((spent / card.limitMinor) * 100, 100) : 0;
 
             return (
               <div key={card.id} className={`${styles.card} ${styles[cycle.level]}`}>
@@ -177,6 +209,33 @@ export default function CardsScreen() {
                     se paga el <strong>{formatLongDate(cycle.currentCyclePayment)}</strong>.
                   </p>
                 </div>
+
+                {/* Gasto del ciclo en la cuenta vinculada */}
+                {card.linkedAccountId && (
+                  <div className={styles.cycleBlock}>
+                    <div className={styles.cycleHeader}>
+                      <span className={styles.cycleLabel}>Gastado este ciclo</span>
+                      <span className={styles.cycleRange}>{formatMoney(money(spent), activeCurrency)}</span>
+                    </div>
+                    {card.limitMinor > 0 && (
+                      <>
+                        <div className={styles.progressTrack}>
+                          <div
+                            className={styles.progressFill}
+                            style={{
+                              width: `${limitPct}%`,
+                              background: limitPct >= 100 ? 'var(--color-expense)' : undefined,
+                            }}
+                          />
+                        </div>
+                        <p className={styles.cycleNote}>
+                          {formatMoney(money(Math.max(card.limitMinor - spent, 0)), activeCurrency)} disponibles
+                          de {formatMoney(money(card.limitMinor), activeCurrency)} ({Math.round(limitPct)}%).
+                        </p>
+                      </>
+                    )}
+                  </div>
+                )}
 
                 <div className={styles.metaRow}>
                   <div className={styles.metaItem}>
@@ -253,14 +312,15 @@ export default function CardsScreen() {
               />
             </div>
             <div className={styles.field}>
-              <label className={styles.fieldLabel}>Moneda</label>
+              <label className={styles.fieldLabel}>Cuenta de la tarjeta</label>
               <select
                 className={styles.select}
-                value={form.currency}
-                onChange={(e) => setForm((f) => ({ ...f, currency: e.target.value }))}
+                value={form.linkedAccountId}
+                onChange={(e) => setForm((f) => ({ ...f, linkedAccountId: e.target.value }))}
               >
-                {CURRENCIES.map((c) => (
-                  <option key={c} value={c}>{c}</option>
+                <option value="">Sin vincular</option>
+                {accounts.map((a) => (
+                  <option key={a.id} value={a.id}>{a.name}</option>
                 ))}
               </select>
             </div>

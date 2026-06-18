@@ -40,6 +40,36 @@ export function useDeleteGoal() {
     mutationFn: (id: string) => goalsApi.remove(id, uuid()),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: QK.goals() });
+      void qc.invalidateQueries({ queryKey: QK.goalContributions() });
+      toast.success(t.common.deleted);
+    },
+    onError: () => toast.error(t.common.saveError),
+  });
+}
+
+export function useGoalContributions() {
+  return useQuery({ queryKey: QK.goalContributions(), queryFn: goalsApi.listContributions });
+}
+
+export function useAddContribution() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: Parameters<typeof goalsApi.addContribution>[0]) =>
+      goalsApi.addContribution(payload, uuid()),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: QK.goalContributions() });
+      toast.success(t.common.saved);
+    },
+    onError: () => toast.error(t.common.saveError),
+  });
+}
+
+export function useDeleteContribution() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => goalsApi.removeContribution(id, uuid()),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: QK.goalContributions() });
       toast.success(t.common.deleted);
     },
     onError: () => toast.error(t.common.saveError),

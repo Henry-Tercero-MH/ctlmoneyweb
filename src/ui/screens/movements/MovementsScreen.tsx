@@ -130,6 +130,8 @@ export default function MovementsScreen() {
         ) : (
           groups.map((group) => {
             const dayTotal = group.items.reduce((sum, tx) => {
+              // Las transferencias son neutras (mueven dinero entre cuentas propias).
+              if (tx.kind === 'transfer') return sum;
               return sum + (tx.kind === 'income' ? tx.amount_minor : -tx.amount_minor);
             }, 0);
 

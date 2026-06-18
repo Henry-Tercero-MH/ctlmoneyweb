@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { v4 as uuid } from 'uuid';
-import { Plus, Trash2, ChevronRight } from 'lucide-react';
+import { Plus, Trash2, ChevronRight, AlertTriangle } from 'lucide-react';
 import { useBudgets, useCreateBudget, useDeleteBudget } from '@/hooks/useBudgets';
 import { useCategories } from '@/hooks/useCategories';
 import { useTransactions } from '@/hooks/useTransactions';
 import { currentYearMonth } from '@/core/dates';
+import { startOfWeek, endOfWeek, format } from 'date-fns';
 import { formatMoney, money, parseMoney } from '@/core/money';
 import { useUiStore } from '@/stores/uiStore';
 import { Card } from '@/ui/components/Card';
@@ -38,12 +39,42 @@ export default function BudgetsScreen() {
 
   const expenseCategories = categories.filter((c) => c.kind === 'expense');
 
-  // Calcular gasto actual por categoría este mes
-  const spentByCategory: Record<string, number> = {};
+  // Gasto por categoría: mensual (todo el mes) y semanal (semana actual, lun-dom)
+  const weekStart = format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd');
+  const weekEnd = format(endOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd');
+  const spentMonthly: Record<string, number> = {};
+  const spentWeekly: Record<string, number> = {};
   for (const tx of transactions) {
-    if (tx.kind === 'expense') {
-      spentByCategory[tx.category_id] = (spentByCategory[tx.category_id] ?? 0) + tx.amount_minor;
+    if (tx.kind !== 'expense') continue;
+    spentMonthly[tx.category_id] = (spentMonthly[tx.category_id] ?? 0) + tx.amount_minor;
+    if (tx.date >= weekStart && tx.date <= weekEnd) {
+      spentWeekly[tx.category_id] = (spentWeekly[tx.category_id] ?? 0) + tx.amount_minor;
     }
+  }
+
+  // Notificación local (PWA) cuando un presupuesto se excede — una vez por sesión.
+  const notifiedRef = useRef<Set<string>>(new Set());
+  const [notifPerm, setNotifPerm] = useState(
+    typeof Notification !== 'undefined' ? Notification.permission : 'denied',
+  );
+  useEffect(() => {
+    if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+    for (const b of budgets) {
+      const spent = (b.period === 'weekly' ? spentWeekly : spentMonthly)[b.category_id] ?? 0;
+      if (spent > b.limit_minor && !notifiedRef.current.has(b.id)) {
+        notifiedRef.current.add(b.id);
+        const cat = categories.find((c) => c.id === b.category_id);
+        new Notification('Presupuesto excedido', {
+          body: `${cat?.name ?? 'Categoría'}: ${formatMoney(money(spent), currency)} de ${formatMoney(money(b.limit_minor), currency)}`,
+        });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [budgets, transactions]);
+
+  function requestNotifications() {
+    if (typeof Notification === 'undefined') return;
+    void Notification.requestPermission().then(setNotifPerm);
   }
 
   function resetForm() {
@@ -77,6 +108,11 @@ export default function BudgetsScreen() {
       </header>
 
       <div className={styles.body}>
+        {budgets.length > 0 && notifPerm === 'default' && (
+          <button className={styles.notifBtn} type="button" onClick={requestNotifications}>
+            <AlertTriangle size={15} strokeWidth={1.75} /> Activar alertas de presupuesto
+          </button>
+        )}
         {loadingBudgets ? (
           <div className={styles.skeletonList}>
             {[1, 2, 3].map((i) => <Skeleton key={i} width="100%" height="96px" radius="16px" />)}
@@ -90,9 +126,10 @@ export default function BudgetsScreen() {
         ) : (
           budgets.map((budget) => {
             const cat = categories.find((c) => c.id === budget.category_id);
-            const spent = spentByCategory[budget.category_id] ?? 0;
+            const spent = (budget.period === 'weekly' ? spentWeekly : spentMonthly)[budget.category_id] ?? 0;
             const pct = Math.min((spent / budget.limit_minor) * 100, 100);
             const over = spent > budget.limit_minor;
+            const near = !over && pct >= 80;
             const remaining = budget.limit_minor - spent;
 
             return (
@@ -126,10 +163,15 @@ export default function BudgetsScreen() {
                 </div>
 
                 <div className={styles.budgetBottom}>
-                  <span className={`${styles.remainingLabel} ${over ? styles.overLabel : ''}`}>
+                  <span className={`${styles.remainingLabel} ${over ? styles.overLabel : near ? styles.nearLabel : ''}`}>
+                    {(over || near) && (
+                      <AlertTriangle size={13} strokeWidth={2} style={{ verticalAlign: '-2px', marginRight: 4 }} />
+                    )}
                     {over
                       ? `${formatMoney(money(Math.abs(remaining)), currency)} ${t.budgets.over}`
-                      : `${formatMoney(money(remaining), currency)} ${t.budgets.remaining}`}
+                      : near
+                        ? `Cerca del límite (${Math.round(pct)}%)`
+                        : `${formatMoney(money(remaining), currency)} ${t.budgets.remaining}`}
                   </span>
                   <button
                     className={styles.deleteBtn}

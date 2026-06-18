@@ -1,5 +1,5 @@
 import { callApi } from '../appsScript';
-import type { GoalDTO } from '../types';
+import type { GoalDTO, GoalContributionDTO, CreateGoalContributionPayload } from '../types';
 
 export interface UpsertGoalPayload {
   id: string;
@@ -17,4 +17,10 @@ export const goalsApi = {
     callApi<GoalDTO>('updateGoal', payload, { idempotencyId }),
   remove: (id: string, idempotencyId: string) =>
     callApi<{ id: string }>('deleteGoal', { id }, { idempotencyId }),
+
+  listContributions: () => callApi<GoalContributionDTO[]>('listGoalContributions', {}),
+  addContribution: (payload: CreateGoalContributionPayload, idempotencyId: string) =>
+    callApi<GoalContributionDTO>('createGoalContribution', payload, { idempotencyId }),
+  removeContribution: (id: string, idempotencyId: string) =>
+    callApi<{ id: string }>('deleteGoalContribution', { id }, { idempotencyId }),
 };

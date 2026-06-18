@@ -202,6 +202,35 @@
   font-weight: 500;
 }
 
+.perMonth {
+  margin-top: var(--space-2);
+  font-size: var(--text-caption);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.contribBtn {
+  margin-top: var(--space-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: 40px;
+  border-radius: var(--radius-input);
+  background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface));
+  border: 1.5px solid var(--color-primary);
+  color: var(--color-primary);
+  font-size: var(--text-label);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.contribBtn:active {
+  background: color-mix(in srgb, var(--color-primary) 20%, var(--color-surface));
+}
+
 .achievedLabel {
   font-size: var(--text-caption);
   color: var(--color-income);

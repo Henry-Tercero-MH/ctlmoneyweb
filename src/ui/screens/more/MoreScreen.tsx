@@ -98,7 +98,8 @@ export default function MoreScreen() {
       name: accountForm.name.trim(),
       type: accountForm.type,
       initial_balance_minor: Math.round(parseFloat(accountForm.initial_balance_minor || '0') * 100),
-      currency: accountForm.currency,
+      // Una sola moneda en toda la app: se usa la moneda activa global.
+      currency,
     };
     const isEdit = accounts.some((a) => a.id === payload.id);
     setAccountSheet(false);
@@ -511,21 +512,11 @@ export default function MoreScreen() {
             </div>
           </div>
 
-          <div className={styles.fieldRow}>
-            <div className={styles.field}>
-              <label className={styles.fieldLabel}>{t.more.initialBalance}</label>
-              <input className={styles.input} type="number" inputMode="decimal" placeholder="0.00" min="0"
-                value={accountForm.initial_balance_minor}
-                onChange={(e) => setAccountForm((f) => ({ ...f, initial_balance_minor: e.target.value }))} />
-            </div>
-            <div className={styles.field}>
-              <label className={styles.fieldLabel}>{t.more.currency}</label>
-              <select className={styles.select}
-                value={accountForm.currency}
-                onChange={(e) => setAccountForm((f) => ({ ...f, currency: e.target.value }))}>
-                {CURRENCIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
-              </select>
-            </div>
+          <div className={styles.field}>
+            <label className={styles.fieldLabel}>{t.more.initialBalance} ({currency})</label>
+            <input className={styles.input} type="number" inputMode="decimal" placeholder="0.00" min="0"
+              value={accountForm.initial_balance_minor}
+              onChange={(e) => setAccountForm((f) => ({ ...f, initial_balance_minor: e.target.value }))} />
           </div>
 
           <Button block onClick={handleSaveAccount}

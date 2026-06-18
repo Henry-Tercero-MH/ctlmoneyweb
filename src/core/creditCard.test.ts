@@ -8,6 +8,7 @@ const card: CreditCard = {
   paymentDay: 2,
   limitMinor: 0,
   currency: 'GTQ',
+  linkedAccountId: '',
 };
 
 describe('computeCardCycle', () => {

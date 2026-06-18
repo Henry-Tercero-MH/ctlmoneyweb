@@ -1,9 +1,13 @@
 import { useState, useMemo } from 'react';
 import { v4 as uuid } from 'uuid';
-import { Plus, Trash2, Pencil, Target } from 'lucide-react';
-import { useGoals, useCreateGoal, useUpdateGoal, useDeleteGoal } from '@/hooks/useGoals';
-import { useAccounts, useAccountBalances } from '@/hooks/useAccounts';
+import { Plus, Trash2, Pencil, Target, PiggyBank } from 'lucide-react';
+import {
+  useGoals, useCreateGoal, useUpdateGoal, useDeleteGoal,
+  useGoalContributions, useAddContribution,
+} from '@/hooks/useGoals';
+import { useAccounts } from '@/hooks/useAccounts';
 import { formatMoney, money, parseMoney } from '@/core/money';
+import { todayISO } from '@/core/dates';
 import { useUiStore } from '@/stores/uiStore';
 import { Card } from '@/ui/components/Card';
 import { Button } from '@/ui/components/Button';
@@ -37,26 +41,54 @@ function progressPct(saved: number, target: number): number {
   return Math.min((saved / target) * 100, 100);
 }
 
+/** Cuánto falta ahorrar por mes para llegar a la meta en la fecha objetivo. */
+function monthlyNeeded(remaining: number, dateStr: string): number | null {
+  if (!dateStr || remaining <= 0) return null;
+  const days = daysLeft(dateStr);
+  if (days === null || days <= 0) return null;
+  const months = Math.max(days / 30.44, 1);
+  return Math.ceil(remaining / months);
+}
+
 export default function GoalsScreen() {
   const currency = useUiStore((s) => s.activeCurrency) as CurrencyCode;
 
   const { data: goals = [], isLoading } = useGoals();
   const { data: accounts = [] } = useAccounts();
-  const { data: balances = [] } = useAccountBalances();
+  const { data: contributions = [] } = useGoalContributions();
   const createGoal = useCreateGoal();
   const updateGoal = useUpdateGoal();
   const deleteGoal = useDeleteGoal();
+  const addContribution = useAddContribution();
 
   const [sheetOpen, setSheetOpen] = useState(false);
   const [form, setForm] = useState<GoalForm>(BLANK);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  // Aporte: meta seleccionada + monto
+  const [contribGoal, setContribGoal] = useState<GoalDTO | null>(null);
+  const [contribAmount, setContribAmount] = useState('');
 
-  // mapa account_id → balance actual
-  const balanceMap = useMemo(() => {
+  // Ahorrado por meta = suma de aportes dedicados.
+  const savedByGoal = useMemo(() => {
     const m: Record<string, number> = {};
-    for (const b of balances) m[b.account_id] = b.balance_minor;
+    for (const c of contributions) m[c.goal_id] = (m[c.goal_id] ?? 0) + c.amount_minor;
     return m;
-  }, [balances]);
+  }, [contributions]);
+
+  async function handleAddContribution() {
+    if (!contribGoal) return;
+    const amt = parseMoney(contribAmount || '0', currency);
+    if (amt <= 0) return;
+    const goalId = contribGoal.id;
+    setContribGoal(null);
+    setContribAmount('');
+    await addContribution.mutateAsync({
+      id: uuid(),
+      goal_id: goalId,
+      amount_minor: amt,
+      date: todayISO(),
+    });
+  }
 
   function openNew() {
     setForm({ ...BLANK, id: uuid() });
@@ -113,14 +145,13 @@ export default function GoalsScreen() {
           />
         ) : (
           goals.map((goal) => {
-            const saved = goal.linked_account_id
-              ? (balanceMap[goal.linked_account_id] ?? 0)
-              : 0;
+            const saved = savedByGoal[goal.id] ?? 0;
             const pct = progressPct(saved, goal.target_minor);
             const over = saved >= goal.target_minor;
             const days = daysLeft(goal.target_date);
             const overdue = days !== null && days < 0;
             const acc = accounts.find((a) => a.id === goal.linked_account_id);
+            const perMonth = monthlyNeeded(goal.target_minor - saved, goal.target_date);
 
             return (
               <Card key={goal.id} className={`${styles.goalCard} ${over ? styles.goalDone : ''}`}>
@@ -179,6 +210,22 @@ export default function GoalsScreen() {
                     </span>
                   )}
                 </div>
+
+                {!over && perMonth !== null && (
+                  <p className={styles.perMonth}>
+                    Ahorra {formatMoney(money(perMonth), currency)}/mes para llegar a tiempo
+                  </p>
+                )}
+
+                {!over && (
+                  <button
+                    className={styles.contribBtn}
+                    type="button"
+                    onClick={() => { setContribGoal(goal); setContribAmount(''); }}
+                  >
+                    <PiggyBank size={15} strokeWidth={1.75} /> Aportar
+                  </button>
+                )}
               </Card>
             );
           })
@@ -229,6 +276,36 @@ export default function GoalsScreen() {
           <Button block onClick={handleSave}
             disabled={!form.name.trim() || !form.target || createGoal.isPending || updateGoal.isPending}>
             {t.common.save}
+          </Button>
+        </div>
+      </BottomSheet>
+
+      {/* ══ Sheet — Aportar a meta ══ */}
+      <BottomSheet
+        open={contribGoal !== null}
+        title={contribGoal ? `Aportar a "${contribGoal.name}"` : 'Aportar'}
+        onClose={() => { setContribGoal(null); setContribAmount(''); }}
+      >
+        <div className={styles.form}>
+          <div className={styles.field}>
+            <label className={styles.fieldLabel}>Monto a aportar ({currency})</label>
+            <input
+              className={styles.input}
+              type="number"
+              inputMode="decimal"
+              placeholder="0.00"
+              min="0"
+              autoFocus
+              value={contribAmount}
+              onChange={(e) => setContribAmount(e.target.value)}
+            />
+          </div>
+          <Button
+            block
+            onClick={handleAddContribution}
+            disabled={!contribAmount || addContribution.isPending}
+          >
+            {addContribution.isPending ? 'Guardando…' : 'Aportar'}
           </Button>
         </div>
       </BottomSheet>

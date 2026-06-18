@@ -41,6 +41,9 @@ var SCHEMA = {
   goals: [
     'id', 'name', 'target_minor', 'target_date', 'linked_account_id', 'created_at',
   ],
+  goal_contributions: [
+    'id', 'goal_id', 'amount_minor', 'date', 'note', 'created_at',
+  ],
   installments: [
     'id', 'name', 'total_minor', 'installment_count', 'paid_count',
     'account_id', 'start_date', 'created_at',
@@ -278,6 +281,7 @@ var SEEDS = {
   budgets:        function(ss) { seedBudgets_(ss); },
   recurring_rules:function(ss) { seedRecurringRules_(ss); },
   goals:          function(ss) { seedGoals_(ss); },
+  goal_contributions: function(ss) { seedGoalContributions_(ss); },
   installments:   function(ss) { seedInstallments_(ss); },
 };
 
@@ -357,6 +361,7 @@ function migrateSchema(seed) {
 function seedBudgets_(ss) { /* sin datos iniciales */ }
 function seedRecurringRules_(ss) { /* sin datos iniciales */ }
 function seedGoals_(ss) { /* sin datos iniciales */ }
+function seedGoalContributions_(ss) { /* sin datos iniciales */ }
 function seedInstallments_(ss) { /* sin datos iniciales */ }
 
 function writeHeaders_(sheet, headers) {
@@ -466,6 +471,9 @@ function listTransactions_(payload) {
   var search = payload.search ? String(payload.search).toLowerCase() : '';
 
   var rows = all.filter(function (t) {
+    // La fila de crédito de una transferencia (…-credit) es interna: el balance
+    // del destino ya la usa. No se lista para no duplicar el movimiento.
+    if (String(t.id).slice(-7) === '-credit') return false;
     if (ym && String(t.date).slice(0, 7) !== ym) return false;
     if (accountId && t.account_id !== accountId) return false;
     if (categoryId && t.category_id !== categoryId) return false;
@@ -512,6 +520,9 @@ function createTransaction_(payload, user) {
   if (payload.kind === 'transfer') {
     if (!payload.transfer_account_id) {
       throw new ApiErr('VALIDATION_ERROR', 'Transferencia requiere cuenta destino.');
+    }
+    if (payload.transfer_account_id === payload.account_id) {
+      throw new ApiErr('VALIDATION_ERROR', 'La cuenta origen y destino no pueden ser la misma.');
     }
     var debit = buildTxn_(payload, now, payload.account_id, payload.transfer_account_id);
     var credit = buildTxn_(payload, now, payload.transfer_account_id, payload.account_id);
@@ -904,7 +915,47 @@ function updateGoal_(payload, user) {
 
 function deleteGoal_(payload, user) {
   var res = deleteRow_('goals', payload.id);
+  // Borrar también los aportes de la meta.
+  var contribs = readAll_('goal_contributions').filter(function (c) { return c.goal_id === payload.id; });
+  contribs.forEach(function (c) { try { deleteRow_('goal_contributions', c.id); } catch (e) {} });
   audit_('deleteGoal', 'goals', payload.id, payload, user.email);
+  return res;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GOAL CONTRIBUTIONS — Aportes dedicados a una meta
+// ─────────────────────────────────────────────────────────────────────────────
+
+function listGoalContributions_(payload) {
+  var rows = readAll_('goal_contributions');
+  if (payload && payload.goal_id) {
+    rows = rows.filter(function (c) { return c.goal_id === payload.goal_id; });
+  }
+  rows.sort(function (a, b) { return String(b.date).localeCompare(String(a.date)); });
+  return rows;
+}
+
+function createGoalContribution_(payload, user) {
+  if (!payload.id || !payload.goal_id) throw new ApiErr('VALIDATION_ERROR', 'Faltan datos del aporte.');
+  if (!Number.isFinite(Number(payload.amount_minor)) || Number(payload.amount_minor) === 0) {
+    throw new ApiErr('VALIDATION_ERROR', 'Monto inválido.');
+  }
+  var row = {
+    id: payload.id,
+    goal_id: payload.goal_id,
+    amount_minor: Math.round(Number(payload.amount_minor)),
+    date: payload.date || nowIso_().slice(0, 10),
+    note: payload.note || '',
+    created_at: nowIso_(),
+  };
+  appendRow_('goal_contributions', row);
+  audit_('createGoalContribution', 'goal_contributions', row.id, payload, user.email);
+  return row;
+}
+
+function deleteGoalContribution_(payload, user) {
+  var res = deleteRow_('goal_contributions', payload.id);
+  audit_('deleteGoalContribution', 'goal_contributions', payload.id, payload, user.email);
   return res;
 }
 
@@ -1013,44 +1064,49 @@ function processDailyRecurring() {
   });
 
   var generated = [];
+  var existingIds = {};
+  readAll_('transactions').forEach(function (t) {
+    if (t.idempotency_id) existingIds[t.idempotency_id] = true;
+  });
+
   rules.forEach(function (rule) {
-    // Verificar fecha de fin
-    if (rule.end_date && rule.end_date < today) {
-      // Desactivar regla vencida
-      rule.active = false;
-      updateRow_('recurring_rules', rule.id, rule);
-      return;
+    // Catch-up: genera TODAS las ocurrencias pendientes hasta hoy, no solo una.
+    // (Si el trigger no corrió 3 días, recupera los 3.) Tope de seguridad por si
+    // una regla quedó muy atrasada.
+    var guard = 0;
+    while (rule.next_run_date && rule.next_run_date <= today && guard < 500) {
+      guard++;
+
+      // Si ya pasó la fecha de fin, desactivar y salir.
+      if (rule.end_date && rule.next_run_date > rule.end_date) {
+        rule.active = false;
+        break;
+      }
+
+      var idemId = rule.id + '-' + rule.next_run_date;
+      if (!existingIds[idemId]) {
+        var txId = Utilities.getUuid();
+        appendRow_('transactions', {
+          id: txId,
+          account_id: rule.account_id,
+          category_id: rule.category_id,
+          kind: rule.kind,
+          amount_minor: Number(rule.amount_minor),
+          date: rule.next_run_date,
+          note: rule.note || '',
+          transfer_account_id: '',
+          recurring_id: rule.id,
+          idempotency_id: idemId,
+          receipt_url: '',
+          created_at: nowIso_(),
+          updated_at: nowIso_(),
+        });
+        existingIds[idemId] = true;
+        generated.push(txId);
+      }
+
+      rule.next_run_date = nextRunDate_(rule.next_run_date, rule.frequency);
     }
-
-    // Generar transacción
-    var txId = Utilities.getUuid();
-    var txn = {
-      id: txId,
-      account_id: rule.account_id,
-      category_id: rule.category_id,
-      kind: rule.kind,
-      amount_minor: Number(rule.amount_minor),
-      date: rule.next_run_date,
-      note: rule.note || '',
-      transfer_account_id: '',
-      recurring_id: rule.id,
-      idempotency_id: rule.id + '-' + rule.next_run_date,
-      receipt_url: '',
-      created_at: nowIso_(),
-      updated_at: nowIso_(),
-    };
-
-    // Evitar duplicados por idempotency_id
-    var existing = readAll_('transactions').some(function (t) {
-      return t.idempotency_id === txn.idempotency_id;
-    });
-    if (!existing) {
-      appendRow_('transactions', txn);
-      generated.push(txId);
-    }
-
-    // Calcular próxima fecha
-    rule.next_run_date = nextRunDate_(rule.next_run_date, rule.frequency);
     updateRow_('recurring_rules', rule.id, rule);
   });
 
@@ -1256,6 +1312,9 @@ function dispatch_(action, payload, user, idem) {
     case 'createGoal':              return createGoal_(payload, user);
     case 'updateGoal':              return updateGoal_(payload, user);
     case 'deleteGoal':              return deleteGoal_(payload, user);
+    case 'listGoalContributions':   return listGoalContributions_(payload);
+    case 'createGoalContribution':  return createGoalContribution_(payload, user);
+    case 'deleteGoalContribution':  return deleteGoalContribution_(payload, user);
     case 'listInstallments':        return listInstallments_();
     case 'createInstallment':       return createInstallment_(payload, user);
     case 'updateInstallment':       return updateInstallment_(payload, user);

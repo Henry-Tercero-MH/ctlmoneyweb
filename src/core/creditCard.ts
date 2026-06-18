@@ -11,6 +11,8 @@ export interface CreditCard {
   /** Límite de crédito en unidades menores. 0 = sin límite. */
   limitMinor: number;
   currency: string;
+  /** Cuenta (normalmente de tipo `card`) cuyos gastos forman el estado de cuenta. '' = ninguna. */
+  linkedAccountId: string;
 }
 
 export type AlertLevel = 'ok' | 'soon' | 'urgent';

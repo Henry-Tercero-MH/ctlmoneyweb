@@ -21,5 +21,6 @@ export const QK = {
   categories: () => ['categories'] as const,
   settings: () => ['settings'] as const,
   goals: () => ['goals'] as const,
+  goalContributions: () => ['goalContributions'] as const,
   installments: () => ['installments'] as const,
 } as const;

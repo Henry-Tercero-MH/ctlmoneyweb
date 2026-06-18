@@ -3,9 +3,12 @@ import { v4 as uuid } from 'uuid';
 import { Plus, Pencil, Trash2, CheckCircle2 } from 'lucide-react';
 import { useInstallments, useCreateInstallment, useUpdateInstallment, useDeleteInstallment } from '@/hooks/useInstallments';
 import { useAccounts } from '@/hooks/useAccounts';
+import { useCategories } from '@/hooks/useCategories';
+import { useCreateTransaction } from '@/hooks/useTransactions';
 import { useUiStore } from '@/stores/uiStore';
 import { formatMoney, money } from '@/core/money';
-import { todayISO } from '@/core/dates';
+import { todayISO, currentYearMonth } from '@/core/dates';
+import { toast } from '@/ui/components/toast';
 import { BottomSheet } from '@/ui/components/BottomSheet';
 import { Button } from '@/ui/components/Button';
 import { EmptyState } from '@/ui/components/EmptyState';
@@ -56,9 +59,11 @@ export default function InstallmentsScreen() {
   const currency = useUiStore((s) => s.activeCurrency) as CurrencyCode;
   const { data: installments = [], isLoading } = useInstallments();
   const { data: accounts = [] } = useAccounts();
+  const { data: categories = [] } = useCategories();
   const createInst = useCreateInstallment();
   const updateInst = useUpdateInstallment();
   const deleteInst = useDeleteInstallment();
+  const createTx = useCreateTransaction(currentYearMonth());
 
   const [sheet, setSheet] = useState(false);
   const [form, setForm] = useState<Form>(BLANK);
@@ -66,16 +71,15 @@ export default function InstallmentsScreen() {
 
   const isEditing = installments.some((i) => i.id === form.id);
 
-  // Resumen top
-  const totalPending = installments.reduce((acc, i) => {
-    const perCuota = i.installment_count > 0 ? i.total_minor / i.installment_count : 0;
-    const remaining = i.installment_count - i.paid_count;
-    return acc + perCuota * remaining;
-  }, 0);
-  const totalPaid = installments.reduce((acc, i) => {
-    const perCuota = i.installment_count > 0 ? i.total_minor / i.installment_count : 0;
-    return acc + perCuota * i.paid_count;
-  }, 0);
+  // Resumen top (con residuo de redondeo asignado a la última cuota)
+  const totalPending = installments.reduce(
+    (acc, i) => acc + splitInstallment(i.total_minor, i.installment_count, i.paid_count).remainingAmount,
+    0,
+  );
+  const totalPaid = installments.reduce(
+    (acc, i) => acc + splitInstallment(i.total_minor, i.installment_count, i.paid_count).paidAmount,
+    0,
+  );
 
   function openNew() {
     setForm(BLANK);
@@ -125,6 +129,38 @@ export default function InstallmentsScreen() {
 
   async function handlePayCuota(inst: InstallmentDTO) {
     if (inst.paid_count >= inst.installment_count) return;
+    if (!inst.account_id) {
+      toast.error('Asigna una cuenta a esta compra para registrar el pago.');
+      return;
+    }
+    const deudas =
+      categories.find((c) => c.kind === 'expense' && c.icon === 'deudas') ??
+      categories.find((c) => c.kind === 'expense' && /deuda/i.test(c.name));
+    if (!deudas) {
+      toast.error('No existe una categoría de gasto "Deudas".');
+      return;
+    }
+
+    const cuotaNum = inst.paid_count + 1;
+    const split = splitInstallment(inst.total_minor, inst.installment_count, inst.paid_count);
+    // La última cuota absorbe el residuo para que la suma cuadre con el total.
+    const amount =
+      cuotaNum === inst.installment_count
+        ? inst.total_minor - split.regular * (inst.installment_count - 1)
+        : split.regular;
+
+    // 1) Registrar el gasto real en la cuenta.
+    await createTx.mutateAsync({
+      id: uuid(),
+      account_id: inst.account_id,
+      category_id: deudas.id,
+      kind: 'expense',
+      amount_minor: amount,
+      date: todayISO(),
+      note: `${inst.name} (cuota ${cuotaNum}/${inst.installment_count})`,
+    });
+
+    // 2) Avanzar el contador de cuotas pagadas.
     await updateInst.mutateAsync({
       id: inst.id,
       name: inst.name,
@@ -181,12 +217,11 @@ export default function InstallmentsScreen() {
               />
             ) : (
               installments.map((inst) => {
-                const perCuota = inst.installment_count > 0 ? inst.total_minor / inst.installment_count : 0;
                 const paid = inst.paid_count;
                 const total = inst.installment_count;
                 const done = paid >= total;
                 const pct = total > 0 ? Math.round((paid / total) * 100) : 0;
-                const remaining = total - paid;
+                const split = splitInstallment(inst.total_minor, total, paid);
                 const nextDate = nextInstallmentDate(inst.start_date, paid);
 
                 return (
@@ -221,12 +256,12 @@ export default function InstallmentsScreen() {
                         </div>
                         <div className={styles.infoRow}>
                           <span className={styles.infoLabel}>Por cuota</span>
-                          <span className={styles.infoValue}>{formatMoney(money(Math.round(perCuota)), currency)}</span>
+                          <span className={styles.infoValue}>{formatMoney(money(split.regular), currency)}</span>
                         </div>
                         <div className={styles.infoRow}>
                           <span className={styles.infoLabel}>Restante</span>
                           <span className={`${styles.infoValue} ${done ? styles.infoValueGreen : styles.infoValueYellow}`}>
-                            {formatMoney(money(Math.round(perCuota * remaining)), currency)}
+                            {formatMoney(money(split.remainingAmount), currency)}
                           </span>
                         </div>
                         {!done && (
@@ -369,6 +404,17 @@ export default function InstallmentsScreen() {
       )}
     </div>
   );
+}
+
+/** Divide el total en cuotas enteras; el residuo de redondeo va a la última cuota,
+ *  de modo que la suma de las cuotas siempre cuadra con el total. */
+function splitInstallment(totalMinor: number, count: number, paidCount: number) {
+  if (count <= 0) return { regular: 0, paidAmount: 0, remainingAmount: totalMinor };
+  const regular = Math.floor(totalMinor / count);
+  const done = paidCount >= count;
+  // El residuo está en la última cuota: hasta no pagarla, lo pagado son cuotas regulares.
+  const paidAmount = done ? totalMinor : regular * paidCount;
+  return { regular, paidAmount, remainingAmount: totalMinor - paidAmount };
 }
 
 function nextInstallmentDate(startDate: string, paidCount: number): string {
