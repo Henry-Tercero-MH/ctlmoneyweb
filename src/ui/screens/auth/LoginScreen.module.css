@@ -29,19 +29,12 @@
   gap: var(--space-3);
 }
 
-.logoMark {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 80px;
-  height: 80px;
-  background: var(--color-primary);
-  color: var(--color-on-primary);
-  font-size: 40px;
-  font-weight: 800;
+.logoImg {
+  width: 96px;
+  height: 96px;
+  object-fit: contain;
   border-radius: 24px;
   box-shadow: var(--shadow-primary), 0 0 60px rgba(245, 200, 0, 0.15);
-  letter-spacing: -1px;
 }
 
 .logoName {

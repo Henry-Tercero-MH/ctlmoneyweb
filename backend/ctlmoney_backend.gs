@@ -597,15 +597,15 @@ function getAccountBalances_() {
   accounts.forEach(function (a) { map[a.id] = Number(a.initial_balance_minor) || 0; });
   txns.forEach(function (t) {
     var amt = Number(t.amount_minor) || 0;
-    // Cuenta origen
     if (map[t.account_id] !== undefined) {
       if (t.kind === 'income')   map[t.account_id] += amt;
       else if (t.kind === 'expense')  map[t.account_id] -= amt;
-      else if (t.kind === 'transfer') map[t.account_id] -= amt;
-    }
-    // Cuenta destino en transferencia recibe el monto
-    if (t.kind === 'transfer' && t.transfer_account_id && map[t.transfer_account_id] !== undefined) {
-      map[t.transfer_account_id] += amt;
+      else if (t.kind === 'transfer') {
+        // Cada transferencia son 2 filas: la de crédito (id …-credit) suma a su
+        // cuenta (destino) y la de débito resta a la suya (origen).
+        if (String(t.id).slice(-7) === '-credit') map[t.account_id] += amt;
+        else map[t.account_id] -= amt;
+      }
     }
   });
   return Object.keys(map).map(function (id) {

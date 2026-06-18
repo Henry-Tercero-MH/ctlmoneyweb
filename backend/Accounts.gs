@@ -19,7 +19,12 @@ function getAccountBalances_() {
     if (map[t.account_id] === undefined) return;
     if (t.kind === 'income') map[t.account_id] += amt;
     else if (t.kind === 'expense') map[t.account_id] -= amt;
-    else if (t.kind === 'transfer') map[t.account_id] -= amt; // débito en cuenta de la fila
+    else if (t.kind === 'transfer') {
+      // 2 filas por transferencia: la de crédito (id …-credit) suma a su cuenta
+      // (destino); la de débito resta a la suya (origen).
+      if (String(t.id).slice(-7) === '-credit') map[t.account_id] += amt;
+      else map[t.account_id] -= amt;
+    }
   });
   return Object.keys(map).map(function (id) {
     return { account_id: id, balance_minor: map[id] };

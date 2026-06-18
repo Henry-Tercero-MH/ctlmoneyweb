@@ -14,13 +14,13 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       devOptions: { enabled: false },
-      includeAssets: ['icons/apple-touch-icon.png', 'favicon.svg'],
+      includeAssets: ['icons/apple-touch-icon.png', 'favicon.png'],
       manifest: {
         name: 'ctlmoney',
         short_name: 'ctlmoney',
         description: 'Gestión integral de finanzas personales',
         theme_color: '#0a0a0a',
-        background_color: '#f5c800',
+        background_color: '#0a0a0a',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',

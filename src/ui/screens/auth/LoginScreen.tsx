@@ -5,6 +5,7 @@ import { settingsApi } from '@/api/endpoints/settings';
 import { toast } from '@/ui/components/toast';
 import { t } from '@/i18n/es';
 import { GOOGLE_CLIENT_ID } from '@/core/constants';
+import logoUrl from '@/ui/logoctlmoney.png';
 import styles from './LoginScreen.module.css';
 
 export default function LoginScreen() {
@@ -14,7 +15,7 @@ export default function LoginScreen() {
     <div className={styles.screen}>
       <div className={styles.content}>
         <div className={styles.logo} aria-label={t.appName}>
-          <span className={styles.logoMark}>$</span>
+          <img src={logoUrl} alt={t.appName} className={styles.logoImg} width={96} height={96} />
           <span className={styles.logoName}>{t.appName}</span>
         </div>
 
