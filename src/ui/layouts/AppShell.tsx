@@ -1,5 +1,5 @@
 import { Outlet, NavLink } from 'react-router-dom';
-import { Home, List, PlusCircle, MoreHorizontal } from 'lucide-react';
+import { Home, List, PlusCircle, BarChart2, MoreHorizontal } from 'lucide-react';
 import { useUiStore } from '@/stores/uiStore';
 import { t } from '@/i18n/es';
 import styles from './AppShell.module.css';
@@ -41,6 +41,15 @@ export function AppShell() {
         >
           <PlusCircle size={28} strokeWidth={1.75} />
         </button>
+
+        <NavLink
+          to="/analisis"
+          className={({ isActive }) => `${styles.tab} ${isActive ? styles.active : ''}`}
+          aria-label={t.nav.analysis}
+        >
+          <BarChart2 size={22} strokeWidth={1.75} />
+          <span className={styles.tabLabel}>{t.nav.analysis}</span>
+        </NavLink>
 
         <NavLink
           to="/mas"

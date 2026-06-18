@@ -1,0 +1,343 @@
+.screen {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.header {
+  padding: var(--space-4) var(--space-4) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg);
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.title {
+  font-size: var(--text-title);
+  font-weight: 800;
+  color: var(--color-text-primary);
+  letter-spacing: -0.5px;
+}
+
+/* ── Selector de mes ── */
+.monthNav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
+  gap: var(--space-3);
+}
+
+.monthBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.monthBtn:not(:disabled):active {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  border-color: var(--color-primary);
+}
+
+.monthBtn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.monthLabel {
+  font-size: var(--text-label);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  text-transform: capitalize;
+  flex: 1;
+  text-align: center;
+}
+
+/* ── Body ── */
+.body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: var(--space-4) var(--space-4) calc(var(--space-12) + var(--safe-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.skeletons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* ── KPI row ── */
+.kpiRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: var(--space-2);
+}
+
+.kpiCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-3) var(--space-2);
+  gap: 4px;
+  text-align: center;
+}
+
+.kpiIcon {
+  flex-shrink: 0;
+}
+
+.kpiValue {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  line-height: 1;
+}
+
+.kpiLabel {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary);
+}
+
+.kpiIncome .kpiIcon,
+.kpiIncome .kpiValue { color: var(--color-income); }
+
+.kpiExpense .kpiIcon,
+.kpiExpense .kpiValue { color: var(--color-expense); }
+
+.kpiNet .kpiIcon,
+.kpiNet .kpiValue { color: var(--color-income); }
+
+.kpiNetNeg .kpiIcon,
+.kpiNetNeg .kpiValue { color: var(--color-expense); }
+
+/* ── Section title ── */
+.sectionTitle {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-3);
+}
+
+/* ── Donut card ── */
+.donutCard {
+  padding: var(--space-4);
+}
+
+.donutRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.donut {
+  width: 176px;
+  height: 176px;
+  flex-shrink: 0;
+}
+
+.donutTotal {
+  font-size: 13px;
+  font-weight: 800;
+  fill: var(--color-text-primary);
+  font-family: var(--font-sans);
+}
+
+.donutLabel {
+  font-size: 10px;
+  fill: var(--color-text-secondary);
+  font-family: var(--font-sans);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ── Leyenda ── */
+.legend {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.legendRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.legendDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legendIcon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.legendName {
+  font-size: var(--text-caption);
+  color: var(--color-text-primary);
+  font-weight: 500;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.legendPct {
+  font-size: var(--text-caption);
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+.legendMore {
+  font-size: 11px;
+  color: var(--color-text-disabled);
+  padding-left: 16px;
+}
+
+/* ── Barras por categoría ── */
+.barsCard {
+  padding: var(--space-4);
+}
+
+.barsList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.barRow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.barMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.barIcon {
+  font-size: 15px;
+  flex-shrink: 0;
+  width: 20px;
+  text-align: center;
+}
+
+.barName {
+  font-size: var(--text-caption);
+  color: var(--color-text-primary);
+  font-weight: 500;
+  flex: 1;
+}
+
+.barAmount {
+  font-size: var(--text-caption);
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+.barTrack {
+  width: 100%;
+  height: 6px;
+  background: var(--color-surface-2);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: var(--radius-pill);
+  transition: width 0.5s ease;
+}
+
+/* ── Gráfica diaria ── */
+.dailyCard {
+  padding: var(--space-4);
+}
+
+.dailyGrid {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 90px;
+}
+
+.dailyCol {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  height: 100%;
+}
+
+.dailyBarWrap {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.dailyBar {
+  width: 100%;
+  max-width: 18px;
+  background: var(--color-expense);
+  border-radius: 3px 3px 0 0;
+  opacity: 0.85;
+  transition: height 0.4s ease;
+}
+
+.dailyDay {
+  font-size: 10px;
+  color: var(--color-text-disabled);
+  font-weight: 600;
+  text-align: center;
+}
+
+/* ── Empty state ── */
+.emptyCard {
+  padding: var(--space-8) var(--space-4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.emptyText {
+  font-size: var(--text-label);
+  color: var(--color-text-disabled);
+  text-align: center;
+}

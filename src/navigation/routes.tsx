@@ -9,6 +9,7 @@ const OnboardingScreen = lazy(() => import('@/ui/screens/auth/OnboardingScreen')
 const HomeScreen = lazy(() => import('@/ui/screens/home/HomeScreen'));
 const MovementsScreen = lazy(() => import('@/ui/screens/movements/MovementsScreen'));
 const MoreScreen = lazy(() => import('@/ui/screens/more/MoreScreen'));
+const AnalysisScreen = lazy(() => import('@/ui/screens/analysis/AnalysisScreen'));
 const BudgetsScreen = lazy(() => import('@/ui/screens/budgets/BudgetsScreen'));
 const RecurringScreen = lazy(() => import('@/ui/screens/recurring/RecurringScreen'));
 
@@ -64,6 +65,7 @@ export function AppRoutes() {
         >
           <Route index element={<HomeScreen />} />
           <Route path="movimientos" element={<MovementsScreen />} />
+          <Route path="analisis" element={<AnalysisScreen />} />
           <Route path="presupuestos" element={<BudgetsScreen />} />
           <Route path="recurrentes" element={<RecurringScreen />} />
           <Route path="mas" element={<MoreScreen />} />
