@@ -112,6 +112,89 @@
 .dotWhite { background: #fff; }
 .dotBlack { background: #1a1a2e; }
 
+/* ── Control de tiempo ── */
+.timeRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  max-width: 440px;
+}
+
+.timeIcon {
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+.timeBtn {
+  flex: 1;
+  min-height: 34px;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: var(--text-caption);
+  font-weight: 700;
+}
+
+.timeActive {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+/* ── Relojes ── */
+.clocks {
+  display: flex;
+  gap: var(--space-2);
+  width: 100%;
+  max-width: 440px;
+}
+
+.clock {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-input);
+  background: var(--color-surface);
+  border: 1.5px solid var(--color-border);
+  opacity: 0.6;
+  transition: opacity var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.clockActive {
+  opacity: 1;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-glow);
+}
+
+.clockLow .clockTime {
+  color: var(--color-expense);
+}
+
+.clockLow.clockActive {
+  border-color: var(--color-expense);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-expense) 25%, transparent);
+  animation: pulse 0.9s ease-in-out infinite;
+}
+
+.clockSide {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary);
+}
+
+.clockTime {
+  font-size: var(--text-title);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+}
+
 /* ── Tablero ── */
 .boardWrap {
   width: 100%;

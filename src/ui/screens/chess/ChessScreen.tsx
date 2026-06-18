@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Chess, type Square, type Color, type PieceSymbol } from 'chess.js';
 import { AnimatePresence, motion } from 'framer-motion';
-import { RotateCcw, Volume2, VolumeX, Bot, Users } from 'lucide-react';
+import { RotateCcw, Volume2, VolumeX, Bot, Users, Timer } from 'lucide-react';
 import { pickAiMove } from '@/core/chessAI';
 import { sfx } from '@/core/sfx';
 import styles from './ChessScreen.module.css';
@@ -38,6 +38,14 @@ export default function ChessScreen() {
   const [outcome, setOutcome] = useState<Outcome>(null);
   const aiTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // ── Reloj ──
+  const [timeMin, setTimeMin] = useState(5);
+  const baseMs = timeMin * 60_000;
+  const [whiteMs, setWhiteMs] = useState(baseMs);
+  const [blackMs, setBlackMs] = useState(baseMs);
+  const [started, setStarted] = useState(false);
+  const lastTick = useRef(0);
+
   const board = game.board();
   const turn = game.turn();
   const inCheck = game.isCheck();
@@ -45,6 +53,39 @@ export default function ChessScreen() {
 
   // Limpia timers al desmontar
   useEffect(() => () => { if (aiTimer.current) clearTimeout(aiTimer.current); }, []);
+
+  // Cuenta regresiva del lado al que le toca mover.
+  useEffect(() => {
+    if (!started || outcome) return;
+    lastTick.current = performance.now();
+    const id = setInterval(() => {
+      const now = performance.now();
+      const delta = now - lastTick.current;
+      lastTick.current = now;
+      if (turn === 'w') setWhiteMs((ms) => Math.max(0, ms - delta));
+      else setBlackMs((ms) => Math.max(0, ms - delta));
+    }, 200);
+    return () => clearInterval(id);
+  }, [started, outcome, turn]);
+
+  // Derrota por tiempo agotado.
+  useEffect(() => {
+    if (outcome) return;
+    if (whiteMs <= 0) timeoutLoss('w');
+    else if (blackMs <= 0) timeoutLoss('b');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [whiteMs, blackMs, outcome]);
+
+  function timeoutLoss(side: Color) {
+    if (mode === 'ai') {
+      if (side === 'w') { sfx.lose(); setOutcome({ kind: 'lose', title: 'Tiempo agotado ⏱️', sub: 'Te quedaste sin tiempo' }); }
+      else { sfx.win(); setOutcome({ kind: 'win', title: '¡Ganaste! 🏆', sub: 'La IA se quedó sin tiempo' }); }
+    } else {
+      sfx.win();
+      const winner = side === 'w' ? 'Negras' : 'Blancas';
+      setOutcome({ kind: 'win', title: `¡Ganan ${winner}! 🏆`, sub: 'Por tiempo' });
+    }
+  }
 
   function evaluateEnd() {
     if (!game.isGameOver()) {
@@ -116,6 +157,7 @@ export default function ChessScreen() {
     sfx.unlock();
     if (outcome) return;
     if (mode === 'ai' && turn === 'b') return; // turno de la IA
+    if (!started) setStarted(true); // arranca el reloj con la primera interacción
 
     const piece = game.get(sq);
 
@@ -143,7 +185,7 @@ export default function ChessScreen() {
     sfx.select();
   }
 
-  function reset() {
+  function reset(clockMs = baseMs) {
     if (aiTimer.current) clearTimeout(aiTimer.current);
     game.reset();
     setSelected(null);
@@ -151,12 +193,21 @@ export default function ChessScreen() {
     setLastMove(null);
     setBurst(null);
     setOutcome(null);
+    setWhiteMs(clockMs);
+    setBlackMs(clockMs);
+    setStarted(false);
+    lastTick.current = 0;
     refresh();
   }
 
   function changeMode(m: Mode) {
     setMode(m);
     reset();
+  }
+
+  function setTime(min: number) {
+    setTimeMin(min);
+    reset(min * 60_000);
   }
 
   function toggleMute() {
@@ -177,7 +228,7 @@ export default function ChessScreen() {
           <button className={styles.iconBtn} onClick={toggleMute} type="button" aria-label="Silencio">
             {muted ? <VolumeX size={18} strokeWidth={2} /> : <Volume2 size={18} strokeWidth={2} />}
           </button>
-          <button className={styles.iconBtn} onClick={reset} type="button" aria-label="Reiniciar">
+          <button className={styles.iconBtn} onClick={() => reset()} type="button" aria-label="Reiniciar">
             <RotateCcw size={18} strokeWidth={2} />
           </button>
         </div>
@@ -200,6 +251,33 @@ export default function ChessScreen() {
           >
             <Users size={16} strokeWidth={2} /> 2 jugadores
           </button>
+        </div>
+
+        {/* Control de tiempo */}
+        <div className={styles.timeRow}>
+          <Timer size={15} strokeWidth={2} className={styles.timeIcon} />
+          {[3, 5, 10].map((min) => (
+            <button
+              key={min}
+              className={`${styles.timeBtn} ${timeMin === min ? styles.timeActive : ''}`}
+              onClick={() => setTime(min)}
+              type="button"
+            >
+              {min} min
+            </button>
+          ))}
+        </div>
+
+        {/* Relojes */}
+        <div className={styles.clocks}>
+          <div className={`${styles.clock} ${turn === 'b' && started && !outcome ? styles.clockActive : ''} ${blackMs <= 30_000 ? styles.clockLow : ''}`}>
+            <span className={styles.clockSide}>Negras</span>
+            <span className={styles.clockTime}>{fmtClock(blackMs)}</span>
+          </div>
+          <div className={`${styles.clock} ${turn === 'w' && started && !outcome ? styles.clockActive : ''} ${whiteMs <= 30_000 ? styles.clockLow : ''}`}>
+            <span className={styles.clockSide}>Blancas</span>
+            <span className={styles.clockTime}>{fmtClock(whiteMs)}</span>
+          </div>
         </div>
 
         {/* Estado del turno */}
@@ -296,7 +374,7 @@ export default function ChessScreen() {
             >
               <p className={styles.resultTitle}>{outcome.title}</p>
               <p className={styles.resultSub}>{outcome.sub}</p>
-              <button className={styles.playAgain} onClick={reset} type="button">
+              <button className={styles.playAgain} onClick={() => reset()} type="button">
                 Jugar de nuevo
               </button>
             </motion.div>
@@ -375,6 +453,13 @@ function CapturedStrip({
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+function fmtClock(ms: number): string {
+  const total = Math.max(0, Math.ceil(ms / 1000));
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
 
 function findKing(game: Chess, color: Color): Square | null {
   for (const row of game.board()) {
