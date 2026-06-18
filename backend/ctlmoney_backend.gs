@@ -72,8 +72,18 @@ function colIndex(sheetName, field) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function sheet_(name) {
-  var s = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(name);
-  if (!s) throw new Error('Hoja inexistente: ' + name + '. Ejecuta initializeSpreadsheet primero.');
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var s = ss.getSheetByName(name);
+  if (!s) {
+    // Auto-crea la hoja si está definida en el SCHEMA (p. ej. credit_cards,
+    // goal_contributions) — evita "Hoja inexistente" sin correr migrateSchema.
+    if (SCHEMA[name]) {
+      s = ss.insertSheet(name);
+      writeHeaders_(s, SCHEMA[name]);
+    } else {
+      throw new Error('Hoja inexistente: ' + name + '. Ejecuta initializeSpreadsheet primero.');
+    }
+  }
   return s;
 }
 
