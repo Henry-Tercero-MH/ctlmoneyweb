@@ -66,6 +66,30 @@ function sheet_(name) {
   return s;
 }
 
+// Campos que deben serializarse como "YYYY-MM-DD" cuando Sheets los retorna como Date
+var DATE_FIELDS = { date: true, target_date: true, next_run_date: true, end_date: true, start_month: true };
+// Campos que deben ser "YYYY-MM-DDTHH:mm:ss.sssZ"
+var DATETIME_FIELDS = { created_at: true, updated_at: true, timestamp: true };
+
+
+function serializeCell_(field, value) {
+  if (value instanceof Date) {
+    if (DATE_FIELDS[field]) {
+      // Solo fecha: "2025-06-17"
+      var y = value.getFullYear();
+      var mo = ('0' + (value.getMonth() + 1)).slice(-2);
+      var d = ('0' + value.getDate()).slice(-2);
+      return y + '-' + mo + '-' + d;
+    }
+    if (DATETIME_FIELDS[field]) return value.toISOString();
+    return value.toISOString();
+  }
+  // Booleanos que Sheets guarda como strings "TRUE"/"FALSE"
+  if (value === 'TRUE' || value === true) return true;
+  if (value === 'FALSE' || value === false) return false;
+  return value;
+}
+
 function readAll_(name) {
   var sheet = sheet_(name);
   var last = sheet.getLastRow();
@@ -74,7 +98,9 @@ function readAll_(name) {
   var values = sheet.getRange(2, 1, last - 1, headers.length).getValues();
   return values.map(function (row) {
     var obj = {};
-    for (var i = 0; i < headers.length; i++) obj[headers[i]] = row[i];
+    for (var i = 0; i < headers.length; i++) {
+      obj[headers[i]] = serializeCell_(headers[i], row[i]);
+    }
     return obj;
   });
 }

@@ -3,6 +3,31 @@ import { API_ENDPOINT, MAX_RETRIES, RETRY_DELAYS_MS, REQUEST_TIMEOUT_MS } from '
 import { useAuthStore } from '@/stores/authStore';
 import type { ApiRequest, ApiResponse, ApiError } from './types';
 
+// Campos que deben ser números — Google Sheets los puede devolver como string o float
+const NUMERIC_FIELDS = new Set([
+  'amount_minor', 'initial_balance_minor', 'balance_minor',
+  'limit_minor', 'target_minor', 'sort_order',
+  'income_minor', 'expense_minor', 'net_minor',
+]);
+
+function coerceNumbers<T>(data: T): T {
+  if (Array.isArray(data)) return data.map(coerceNumbers) as unknown as T;
+  if (data !== null && typeof data === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(data as Record<string, unknown>)) {
+      if (NUMERIC_FIELDS.has(k) && (typeof v === 'string' || typeof v === 'number')) {
+        out[k] = Math.round(parseFloat(String(v)) || 0);
+      } else if (v !== null && typeof v === 'object') {
+        out[k] = coerceNumbers(v);
+      } else {
+        out[k] = v;
+      }
+    }
+    return out as T;
+  }
+  return data;
+}
+
 function delay(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
 }
@@ -60,7 +85,11 @@ export async function callApi<T, P = unknown>(
       }
 
       const json = (await res.json()) as ApiResponse<T>;
-      if (json.success && json.data !== undefined) return json.data;
+      if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
+        console.log(`[api] ${action}`, json.success ? json.data : json.error);
+      }
+      if (json.success && json.data !== undefined) return coerceNumbers(json.data) as T;
       if (json.error) {
         // Errores de negocio: no reintentar.
         if (json.error.code === 'DUPLICATE_IDEMPOTENCY' || json.error.code === 'VALIDATION_ERROR') {

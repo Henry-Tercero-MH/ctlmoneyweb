@@ -18,12 +18,12 @@ const CURRENCIES: Record<CurrencyCode, CurrencyMeta> = {
   EUR: { decimals: 2, locale: 'es-ES' },
 };
 
-/** Construye un Money a partir de un entero de unidades menores (centavos). */
-export function money(minorUnits: number): Money {
-  if (!Number.isInteger(minorUnits)) {
-    throw new Error(`Money debe ser entero en unidades menores, recibido: ${minorUnits}`);
-  }
-  return minorUnits as Money;
+/** Construye un Money a partir de un entero de unidades menores (centavos).
+ *  Acepta strings y floats de la API — siempre trunca al entero. */
+export function money(minorUnits: number | string): Money {
+  const n = typeof minorUnits === 'string' ? parseFloat(minorUnits) : minorUnits;
+  if (!Number.isFinite(n)) return 0 as Money;
+  return Math.round(n) as Money;
 }
 
 export const ZERO = money(0);
