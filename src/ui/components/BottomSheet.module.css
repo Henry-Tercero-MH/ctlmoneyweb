@@ -5,6 +5,36 @@
   z-index: 40;
 }
 
+/* ── Variante centrada ── */
+.backdropCentered {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+}
+
+.centeredCard {
+  width: 100%;
+  max-width: 400px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-modal);
+  overflow: hidden;
+}
+
+.centeredCard .body {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .sheet {
   position: fixed;
   left: 0;

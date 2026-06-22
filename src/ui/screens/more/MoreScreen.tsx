@@ -497,6 +497,7 @@ export default function MoreScreen() {
       {/* ══ Sheet — Nueva/Editar cuenta ══ */}
       <BottomSheet
         open={accountSheet}
+        centered
         title={accounts.some((a) => a.id === accountForm.id) ? t.common.edit : t.more.addAccount}
         onClose={() => setAccountSheet(false)}
       >
@@ -535,7 +536,7 @@ export default function MoreScreen() {
       </BottomSheet>
 
       {/* ══ Sheet — Nueva categoría ══ */}
-      <BottomSheet open={categorySheet} title={isEditingCategory ? t.common.edit + ' categoría' : t.more.addCategory} onClose={() => setCategorySheet(false)}>
+      <BottomSheet open={categorySheet} centered title={isEditingCategory ? t.common.edit + ' categoría' : t.more.addCategory} onClose={() => setCategorySheet(false)}>
         <div className={styles.form}>
           <div className={styles.field}>
             <label className={styles.fieldLabel}>{t.more.name}</label>

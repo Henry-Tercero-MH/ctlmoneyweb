@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { RotateCcw, Volume2, VolumeX, Bot, Users, Timer } from 'lucide-react';
 import { pickAiMove } from '@/core/chessAI';
 import { sfx } from '@/core/sfx';
+import { disintegrate } from '@/ui/effects/disintegrate';
 import styles from './ChessScreen.module.css';
 
 const FILES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
@@ -33,10 +34,11 @@ export default function ChessScreen() {
   const [selected, setSelected] = useState<Square | null>(null);
   const [targets, setTargets] = useState<Square[]>([]);
   const [lastMove, setLastMove] = useState<{ from: Square; to: Square } | null>(null);
-  const [burst, setBurst] = useState<{ square: Square; id: number } | null>(null);
   const [muted, setMuted] = useState(false);
   const [outcome, setOutcome] = useState<Outcome>(null);
   const aiTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Refs de las piezas por casilla, para desintegrar la capturada.
+  const pieceRefs = useRef<Record<string, HTMLElement | null>>({});
 
   // ── Reloj ──
   const [timeMin, setTimeMin] = useState(5);
@@ -110,7 +112,10 @@ export default function ChessScreen() {
     return true;
   }
 
-  const applyMove = useCallback((from: Square, to: Square) => {
+  const applyMove = useCallback(async (from: Square, to: Square) => {
+    // La pieza capturada (si la hay) ANTES de mover, para desintegrarla.
+    const capturedNode = game.get(to) ? pieceRefs.current[to] : null;
+
     const mv = game.move({ from, to, promotion: 'q' });
     if (!mv) return;
 
@@ -120,8 +125,9 @@ export default function ChessScreen() {
 
     if (mv.captured) {
       sfx.capture();
-      setBurst({ square: to, id: Date.now() });
-      setTimeout(() => setBurst(null), 650);
+      // El tablero aún no se re-renderiza (solo cambia al llamar refresh),
+      // así que el nodo capturado sigue en pantalla para desintegrarlo.
+      if (capturedNode) { try { await disintegrate(capturedNode); } catch { /* fade fallback */ } }
     } else if (mv.isKingsideCastle() || mv.isQueensideCastle()) {
       sfx.castle();
     } else {
@@ -132,15 +138,15 @@ export default function ChessScreen() {
     const ended = evaluateEnd();
 
     if (!ended && mode === 'ai' && game.turn() === 'b') {
-      aiTimer.current = setTimeout(() => {
+      aiTimer.current = setTimeout(async () => {
         const aimv = pickAiMove(game);
         if (!aimv) return;
+        const aiCapturedNode = aimv.captured ? pieceRefs.current[aimv.to as Square] : null;
         const res = game.move(aimv);
         setLastMove({ from: res.from as Square, to: res.to as Square });
         if (res.captured) {
           sfx.capture();
-          setBurst({ square: res.to as Square, id: Date.now() });
-          setTimeout(() => setBurst(null), 650);
+          if (aiCapturedNode) { try { await disintegrate(aiCapturedNode); } catch { /* fade fallback */ } }
         } else if (res.isKingsideCastle() || res.isQueensideCastle()) {
           sfx.castle();
         } else {
@@ -191,7 +197,6 @@ export default function ChessScreen() {
     setSelected(null);
     setTargets([]);
     setLastMove(null);
-    setBurst(null);
     setOutcome(null);
     setWhiteMs(clockMs);
     setBlackMs(clockMs);
@@ -323,6 +328,7 @@ export default function ChessScreen() {
                       {pieceKey && (
                         <motion.span
                           key={pieceKey + sq}
+                          ref={(el: HTMLElement | null) => { pieceRefs.current[sq] = el; }}
                           className={styles.piece}
                           initial={{ scale: 0, rotate: -25 }}
                           animate={{ scale: 1, rotate: 0 }}
@@ -341,7 +347,6 @@ export default function ChessScreen() {
                       )}
                     </AnimatePresence>
 
-                    {burst?.square === sq && <Burst key={burst.id} />}
                   </div>
                 );
               }),
@@ -386,28 +391,6 @@ export default function ChessScreen() {
 }
 
 // ── Subcomponentes ──────────────────────────────────────────────────────────
-
-function Burst() {
-  const parts = Array.from({ length: 10 });
-  return (
-    <div className={styles.burst} aria-hidden>
-      {parts.map((_, i) => {
-        const angle = (i / parts.length) * Math.PI * 2;
-        const dist = 26 + Math.random() * 16;
-        return (
-          <motion.span
-            key={i}
-            className={styles.spark}
-            initial={{ x: 0, y: 0, scale: 1, opacity: 1 }}
-            animate={{ x: Math.cos(angle) * dist, y: Math.sin(angle) * dist, scale: 0, opacity: 0 }}
-            transition={{ duration: 0.6, ease: 'easeOut' }}
-            style={{ background: ['#ff5fa2', '#ffd166', '#5fd0ff', '#9b5fff'][i % 4] }}
-          />
-        );
-      })}
-    </div>
-  );
-}
 
 function Confetti() {
   const parts = Array.from({ length: 40 });

@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { disintegrate } from '@/ui/effects/disintegrate';
 import { v4 as uuid } from 'uuid';
 import { differenceInCalendarDays } from 'date-fns';
 import { Plus, Pencil, Trash2, CalendarClock, AlertTriangle, CheckCircle2, X } from 'lucide-react';
@@ -57,6 +58,7 @@ export default function CardsScreen() {
   const [sheet, setSheet] = useState(false);
   const [form, setForm] = useState<Form>(blankForm());
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  const rowRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const isEditing = cards.some((c) => c.id === form.id);
 
@@ -114,8 +116,12 @@ export default function CardsScreen() {
     setSheet(false);
   }
 
-  function handleDelete(id: string) {
+  async function handleDelete(id: string) {
     setConfirmId(null);
+    const node = rowRefs.current[id];
+    if (node) {
+      try { await disintegrate(node); } catch { /* fallback silencioso */ }
+    }
     deleteCard.mutate(id);
   }
 
@@ -148,7 +154,11 @@ export default function CardsScreen() {
             const limitPct = card.limitMinor > 0 ? Math.min((spent / card.limitMinor) * 100, 100) : 0;
 
             return (
-              <div key={card.id} className={`${styles.card} ${styles[cycle.level]}`}>
+              <div
+                key={card.id}
+                ref={(el) => { rowRefs.current[card.id] = el; }}
+                className={`${styles.card} ${styles[cycle.level]}`}
+              >
                 <div className={styles.cardHeader}>
                   <div>
                     <p className={styles.cardName}>{card.name}</p>

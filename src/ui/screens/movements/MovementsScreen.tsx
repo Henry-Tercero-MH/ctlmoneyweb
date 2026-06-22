@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { disintegrate } from '@/ui/effects/disintegrate';
 import { Search, Trash2, Pencil, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTransactions, useDeleteTransaction } from '@/hooks/useTransactions';
 import { useUiStore } from '@/stores/uiStore';
@@ -67,11 +68,16 @@ export default function MovementsScreen() {
 
   const { data: transactions = [], isLoading } = useTransactions(ym, search);
   const deleteTx = useDeleteTransaction(ym);
+  const rowRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const groups = useMemo(() => groupByDay(transactions), [transactions]);
 
-  function handleDelete(id: string) {
+  async function handleDelete(id: string) {
     setConfirmDelete(null);
+    const node = rowRefs.current[id];
+    if (node) {
+      try { await disintegrate(node); } catch { /* fallback silencioso */ }
+    }
     deleteTx.mutate(id);
   }
 
@@ -151,6 +157,7 @@ export default function MovementsScreen() {
                   {group.items.map((tx, i) => (
                     <div
                       key={tx.id}
+                      ref={(el) => { rowRefs.current[tx.id] = el; }}
                       className={`${styles.txRow} ${i < group.items.length - 1 ? styles.txBorder : ''}`}
                     >
                       <div className={styles.txInfo}>
