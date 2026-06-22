@@ -17,6 +17,7 @@ const InstallmentsScreen = lazy(() => import('@/ui/screens/installments/Installm
 const CalculatorsScreen = lazy(() => import('@/ui/screens/calculators/CalculatorsScreen'));
 const CardsScreen = lazy(() => import('@/ui/screens/cards/CardsScreen'));
 const ChessScreen = lazy(() => import('@/ui/screens/chess/ChessScreen'));
+const RuleScreen = lazy(() => import('@/ui/screens/rule503020/RuleScreen'));
 
 function PageFallback() {
   return (
@@ -77,6 +78,7 @@ export function AppRoutes() {
           <Route path="cuotas" element={<InstallmentsScreen />} />
           <Route path="tarjetas" element={<CardsScreen />} />
           <Route path="ajedrez" element={<ChessScreen />} />
+          <Route path="regla-50-30-20" element={<RuleScreen />} />
           <Route path="calculadoras" element={<CalculatorsScreen />} />
           <Route path="mas" element={<MoreScreen />} />
         </Route>
